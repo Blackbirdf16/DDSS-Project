@@ -1,0 +1,40 @@
+@startuml
+rectangle FairRideSystem {
+	usecase (Fetch and validate provider prices) as Fetch_and_validate_provider_prices <<Goal>>
+	usecase (Ensure data security and transparency) as Ensure_data_security_and_transparency <<Goal>>
+	usecase (Secure & Anonymous Data Sharing) as Secure___Anonymous_Data_Sharing <<Mitigation Measure>>
+	usecase (Price Data Verification) as Price_Data_Verification <<Mitigation Measure>>
+	usecase (Suspicious Request UNDetection) as Suspicious_Request_UNDetection <<Mitigation Measure>>
+	usecase (Compute Best Price) as Compute_Best_Price <<Goal>>
+	usecase (Secure Authentication) as Secure_Authentication <<Goal>>
+}
+actor  :External Ride Services (Uber, Bolt, FreeNow): as External_Ride_Services__Uber__Bolt__FreeNow_ <<Malicious actor>>
+actor  :Attacker: <<Malicious actor>>
+actor  :Community Network (Other Users): as Community_Network__Other_Users_ <<Agent>>
+actor  :User: <<Agent>>
+usecase (Inject false data or fake prices) as Inject_false_data_or_fake_prices <<Malicious Goal>>
+usecase (Maintain control over their pricing data) as Maintain_control_over_their_pricing_data <<Malicious Goal>>
+usecase (Detect and block “suspicious” requests from external apps) as Detect_and_block__suspicious__requests_from_external_apps <<Malicious Goal>>
+usecase (Share verified real trip prices) as Share_verified_real_trip_prices <<Goal>>
+usecase (Steal user or system information) as Steal_user_or_system_information <<Malicious Goal>>
+User -- Secure_Authentication
+User -- Compute_Best_Price
+Community_Network__Other_Users_ -- Share_verified_real_trip_prices
+External_Ride_Services__Uber__Bolt__FreeNow_ -- Maintain_control_over_their_pricing_data
+External_Ride_Services__Uber__Bolt__FreeNow_ -- Detect_and_block__suspicious__requests_from_external_apps
+Attacker -- Steal_user_or_system_information
+Attacker -- Inject_false_data_or_fake_prices
+Fetch_and_validate_provider_prices ..> Share_verified_real_trip_prices
+Compute_Best_Price ..> Fetch_and_validate_provider_prices
+Secure_Authentication ..> Ensure_data_security_and_transparency
+Fetch_and_validate_provider_prices ..> Maintain_control_over_their_pricing_data
+Detect_and_block__suspicious__requests_from_external_apps -- Fetch_and_validate_provider_prices
+Inject_false_data_or_fake_prices -- Fetch_and_validate_provider_prices
+Steal_user_or_system_information -- Secure_Authentication
+Inject_false_data_or_fake_prices -- Share_verified_real_trip_prices
+Compute_Best_Price ..> Price_Data_Verification : <<Include>>  
+Share_verified_real_trip_prices ..> Price_Data_Verification : <<Include>>  
+Suspicious_Request_UNDetection -- Detect_and_block__suspicious__requests_from_external_apps
+Secure___Anonymous_Data_Sharing -- Steal_user_or_system_information
+Price_Data_Verification -- Inject_false_data_or_fake_prices
+@enduml

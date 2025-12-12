@@ -1,0 +1,81 @@
+@startuml
++class "Log System" as Log_System <<umls_dm_asset_type>> {
+}
++class "Unauthorized access" as Unauthorized_access <<umls_am_threat>> {
+}
++class "Audit Logs & Monitoring" as Audit_Logs___Monitoring <<umls_sm_security_pattern>> {
+}
++class Flooding <<umls_am_attack>> {
+}
++class " Tracebility ^ Avaiability" as _Tracebility___Avaiability <<umls_pm_required_property>> {
+}
++class "Secure Protocols" as Secure_Protocols <<umls_sm_security_pattern>> {
+}
++class "Input Validation" as Input_Validation <<umls_sm_security_pattern>> {
+}
++class Encryption <<umls_sm_security_pattern>> {
+}
++class MITM <<umls_am_attack>> {
+}
++class "SQL Injection" as SQL_Injection <<umls_am_attack>> {
+}
++class Phishing <<umls_am_attack>> {
+}
++class DoS <<umls_am_threat>> {
+}
++class "Price Manipulation" as Price_Manipulation <<umls_am_threat>> {
+}
++class "Data Breach" as Data_Breach <<umls_am_threat>> {
+}
++class Transparency <<umls_pm_required_property>> {
+}
++class Integrity <<umls_pm_required_property>> {
+}
++class Confidentiality <<umls_pm_required_property>> {
+}
++class "R4 – Auditability & Transparency" as R4___Auditability___Transparency <<umls_rm_security_requirement>> {
+}
++class "R3 – Fair Pricing Validation" as R3___Fair_Pricing_Validation <<umls_rm_security_requirement>> {
+}
++class "R2 – Secure Authentication" as R2___Secure_Authentication <<umls_rm_security_requirement>> {
+}
++class "R1 – Data Protection & Privacy" as R1___Data_Protection___Privacy <<umls_rm_security_requirement>> {
+}
++class "API Gateway" as API_Gateway <<umls_dm_asset_type>> {
+}
++class Database <<umls_dm_asset_type>> {
+}
++class "User Data" as User_Data <<umls_dm_asset_type>> {
+}
++class "FairRideApp_Domain" <<umls_dm_domain>> {
+}
+note "Solutions" as note_N5HkKlmFS_iCcBWH
+note "Attacks" as note_d67kKlmFS_iCcBWA
+note "Properties" as note_LprkKlmFS_iCcBVx
+note "Threats" as note__LLkKlmFS_iCcBVq
+note "Requirements" as note_MrFkKlmFS_iCcBU5
+note "Assets" as note_S5UkKlmFS_iCcBUA
+FairRideApp_Domain -- Database
+FairRideApp_Domain -- User_Data
+FairRideApp_Domain -- API_Gateway
+User_Data ..> R1___Data_Protection___Privacy
+API_Gateway ..> R2___Secure_Authentication
+Database ..> R3___Fair_Pricing_Validation
+R1___Data_Protection___Privacy ..> Confidentiality
+R4___Auditability___Transparency ..> _Tracebility___Avaiability
+R2___Secure_Authentication ..> Integrity
+R3___Fair_Pricing_Validation ..> Transparency
+Confidentiality -- Data_Breach
+Integrity -- Price_Manipulation
+Transparency -- Unauthorized_access
+_Tracebility___Avaiability -- DoS
+Data_Breach -- Phishing
+Price_Manipulation -- SQL_Injection
+Unauthorized_access -- MITM
+DoS -- Flooding
+Phishing ..> Encryption
+SQL_Injection ..> Input_Validation
+MITM ..> Secure_Protocols
+Flooding ..> Audit_Logs___Monitoring
+Log_System ..> R4___Auditability___Transparency
+@enduml

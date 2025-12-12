@@ -1,0 +1,44 @@
+@startuml
+rectangle FairRideSystem {
+	usecase (compute_best_price_secure()) as compute_best_price_secure__ <<Mitigation Measure>>
+	usecase (Share Ride Info) as Share_Ride_Info
+	usecase (Edit Profile & Privacy) as Edit_Profile___Privacy <<Mitigation Measure>>
+	usecase (Showresult)
+	usecase (Validate Data) as Validate_Data <<Mitigation Measure>>
+	usecase (Create Account) as Create_Account
+	usecase (Logout)
+	usecase (get_real_time_prices ()) as get_real_time_prices___
+	usecase (authenticate_user()) as authenticate_user__
+	usecase (create_trip_request_secure()) as create_trip_request_secure__ <<Mitigation Measure>>
+}
+actor  :Attacker: <<Malicious actor>>
+actor  :External Ride Services (Uber, Bolt, FreeNow): as External_Ride_Services__Uber__Bolt__FreeNow_ <<Malicious actor>>
+actor  :User: <<Agent>>
+usecase (Bypass Authentication) as Bypass_Authentication <<Malicious Goal>>
+usecase (Steal User Data) as Steal_User_Data <<Malicious Use Case>>
+usecase (Send Fake Data) as Send_Fake_Data <<Malicious Use Case>>
+usecase (Block Suspicious Requests) as Block_Suspicious_Requests <<Malicious Use Case>>
+External_Ride_Services__Uber__Bolt__FreeNow_ -- Block_Suspicious_Requests
+Attacker -- Send_Fake_Data
+Attacker -- Steal_User_Data
+External_Ride_Services__Uber__Bolt__FreeNow_ -- Bypass_Authentication
+authenticate_user__ -- Send_Fake_Data
+authenticate_user__ -- Bypass_Authentication
+Create_Account ..> authenticate_user__ : <<Include>>  
+User -- Create_Account
+Bypass_Authentication -- Create_Account
+Block_Suspicious_Requests -- get_real_time_prices___
+compute_best_price_secure__ <.. get_real_time_prices___ : <<Extend>>  
+compute_best_price_secure__ -- Block_Suspicious_Requests
+Share_Ride_Info ..> authenticate_user__ : <<Include>>  
+create_trip_request_secure__ -- Send_Fake_Data
+User ..> create_trip_request_secure__
+Share_Ride_Info ..> create_trip_request_secure__ : <<Include>>  
+User -- Share_Ride_Info
+Send_Fake_Data -- Share_Ride_Info
+Edit_Profile___Privacy -- Steal_User_Data
+Edit_Profile___Privacy -- Steal_User_Data
+User -- Edit_Profile___Privacy
+User -- Logout
+Showresult <.. compute_best_price_secure__ : <<Extend>>  
+@enduml

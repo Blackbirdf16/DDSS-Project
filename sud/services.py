@@ -1,0 +1,181 @@
+from __future__ import annotations
+import time
+import uuid
+from typing import Dict, List, Optional, Tuple
+
+from .config import SecurityConfig
+from .models import AuthResult, BestRideOption, PriceQuote, TripRequest, User
+from .rate_limit import RateLimiter
+from .security import (
+    constant_time_equals,
+    encrypt_at_rest,
+    decrypt_at_rest,
+    mint_session_token,
+    pbkdf2_hash_password,
+    validate_session_token,
+    verify_hmac_hex,
+)
+from .providers import ProviderClient, fetch_quotes_from_providers
+
+
+class InMemoryDB:
+    def __init__(self) -> None:
+        self.users_by_email: Dict[str, User] = {}
+        self.trip_store: Dict[str, bytes] = {}  # encrypted blobs
+
+    def add_user(self, user: User) -> None:
+        self.users_by_email[user.email.lower()] = user
+
+    def get_user_by_email(self, email: str) -> Optional[User]:
+        return self.users_by_email.get(email.lower())
+
+    def save_trip_encrypted(self, trip_id: str, blob: bytes) -> None:
+        self.trip_store[trip_id] = blob
+
+    def load_trip_encrypted(self, trip_id: str) -> Optional[bytes]:
+        return self.trip_store.get(trip_id)
+
+
+def _validate_location(s: str) -> bool:
+    # Deliberately strict: keep it simple
+    if not s or len(s) > 200:
+        return False
+    banned = [";", "--", "<script", "/*", "*/"]
+    lowered = s.lower()
+    return not any(b in lowered for b in banned)
+
+
+def _validate_battery(battery_pct: Optional[int]) -> bool:
+    if battery_pct is None:
+        return True
+    return 0 <= battery_pct <= 100
+
+
+class FairRideService:
+    def __init__(self, cfg: SecurityConfig, db: InMemoryDB) -> None:
+        self.cfg = cfg
+        self.db = db
+        self.login_rl = RateLimiter(cfg.login_max_attempts_per_minute)
+        self.trip_rl = RateLimiter(cfg.trip_max_requests_per_minute)
+        self.provider_rl = RateLimiter(cfg.provider_fetch_max_requests_per_minute)
+
+    # 1) Access control + confidentiality
+    def authenticate_user(self, email: str, password: str, client_id: str) -> AuthResult:
+        if not self.login_rl.allow(subject=f"login:{client_id}"):
+            return AuthResult(ok=False, reason="rate_limited")
+
+        user = self.db.get_user_by_email(email)
+        if not user or not user.is_active:
+            # do not leak which part failed
+            return AuthResult(ok=False, reason="invalid_credentials")
+
+        computed = pbkdf2_hash_password(password, user.password_salt, self.cfg.pbkdf2_iterations)
+        if not constant_time_equals(computed, user.password_hash):
+            return AuthResult(ok=False, reason="invalid_credentials")
+
+        st = mint_session_token(user.user_id, self.cfg.session_token_ttl_seconds)
+        return AuthResult(ok=True, user_id=user.user_id, session_token=st.token)
+
+    # 2) Secure data handling + encryption (at rest)
+    def create_trip_request_secure(
+        self,
+        session_token: str,
+        client_id: str,
+        origin: str,
+        destination: str,
+        battery_pct: Optional[int] = None,
+        device_type: Optional[str] = None,
+    ) -> TripRequest:
+        if not validate_session_token(session_token):
+            raise PermissionError("unauthorized")
+
+        if not self.trip_rl.allow(subject=f"trip:{client_id}"):
+            raise RuntimeError("rate_limited")
+
+        if not _validate_location(origin) or not _validate_location(destination):
+            raise ValueError("invalid_location")
+
+        if not _validate_battery(battery_pct):
+            raise ValueError("invalid_battery")
+
+        user_id = session_token.split(".", 1)[0]
+        trip = TripRequest(
+            trip_id=str(uuid.uuid4()),
+            user_id=user_id,
+            origin=origin,
+            destination=destination,
+            timestamp_ms=int(time.time() * 1000),
+            battery_pct=battery_pct,
+            device_type=device_type,
+        )
+
+        # Encrypt at rest (educational); store as bytes blob
+        blob = f"{trip.user_id}|{trip.origin}|{trip.destination}|{trip.timestamp_ms}|{trip.battery_pct}|{trip.device_type}".encode(
+            "utf-8"
+        )
+        enc = encrypt_at_rest(self.cfg.at_rest_key, blob)
+        self.db.save_trip_encrypted(trip.trip_id, enc)
+        return trip
+
+    # 3) Integrity + availability + resilience
+    def get_real_time_prices_secure(
+        self,
+        session_token: str,
+        client_id: str,
+        trip: TripRequest,
+        providers: List[ProviderClient],
+        max_providers: int = 3,
+    ) -> List[PriceQuote]:
+        if not validate_session_token(session_token):
+            raise PermissionError("unauthorized")
+
+        if not self.provider_rl.allow(subject=f"providers:{client_id}"):
+            raise RuntimeError("rate_limited")
+
+        # Availability/resilience: only query up to N providers, tolerate failures
+        quotes: List[PriceQuote] = []
+        for p in providers[:max_providers]:
+            try:
+                q = p.fetch_quote(trip)
+                # Integrity check: verify HMAC on provider payload
+                payload = f"{q.provider_id}|{trip.trip_id}|{q.price_eur:.2f}|{q.eta_minutes}|{q.timestamp_ms}".encode("utf-8")
+                if verify_hmac_hex(self.cfg.provider_hmac_key, payload, q.payload_hmac_hex):
+                    quotes.append(q)
+                # else drop silently: untrusted
+            except Exception:
+                # tolerate provider failure; continue
+                continue
+
+        if not quotes:
+            raise RuntimeError("no_quotes_available")
+        return quotes
+
+    # 4) Transparency + auditability + fairness
+    def compute_best_price_secure(self, quotes: List[PriceQuote]) -> Tuple[BestRideOption, List[BestRideOption]]:
+        if not quotes:
+            raise ValueError("no_quotes")
+
+        # Deterministic scoring for auditability
+        # Example score: weight price more than ETA; no hidden factors.
+        # score = price + 0.2 * eta
+        options: List[BestRideOption] = []
+        for q in quotes:
+            if q.price_eur <= 0 or q.eta_minutes <= 0:
+                continue
+            score = round(q.price_eur + 0.2 * q.eta_minutes, 6)
+            options.append(
+                BestRideOption(
+                    provider_id=q.provider_id,
+                    quote_id=q.quote_id,
+                    price_eur=q.price_eur,
+                    eta_minutes=q.eta_minutes,
+                    score=score,
+                )
+            )
+
+        if not options:
+            raise RuntimeError("no_valid_quotes")
+
+        # sort stable and deterministic
+        options_sorted = sorted(options, key=lambda o: (o.score, o.provider_id, o.quote_id))
+        return options_sorted[0], options_sorted[:3]

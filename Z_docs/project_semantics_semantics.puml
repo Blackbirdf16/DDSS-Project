@@ -1,0 +1,173 @@
+@startjson
+[ {
+  "ownerName" : "Log System",
+  "ownerType" : "Class",
+  "description" : "Records user activities and system events for transparency and audit purposes. \n\nEvery time a user searches, compares, or reports a problem, we save it in logs. The logs will help us find attacks or strange activities. Each log will show who did what and when. Logs will be stored in a secure database with restricted access. We will use these logs to make transparency reports for regulators. Old logs will be archived to save space but can still be reviewed."
+}, {
+  "ownerName" : "Unauthorized access",
+  "ownerType" : "Class",
+  "description" : "Access to system features or APIs without proper authentication.\n\nUnauthorized access (acceso no autorizado / Broken Access Control): Fallos de control de acceso permiten a usuarios actuar fuera de sus permisos, causando divulgación o modificación de información o funciones. En FairRideApp: un usuario o API key podría leer/editar informes, observaciones o precios ajenos (IDOR). (OWASP https://owasp.org/Top10/A01_2021-Broken_Access_Control/)  \n\nUsers without login cannot use comparison features. APIs will require valid tokens to respond. Firewall rules will block requests from unknown origins. Admin access will be limited and logged."
+}, {
+  "ownerName" : "Audit Logs & Monitoring",
+  "ownerType" : "Class",
+  "description" : "Tracks and records all activities to detect anomalies or attacks. \n\nEvery action will be saved in audit logs with date and user ID. Admins can see system activity and suspicious behavior. Automatic alerts will be sent for repeated failed logins. Reports will help detect trends or possible attacks."
+}, {
+  "ownerName" : "Flooding",
+  "ownerType" : "Class",
+  "description" : "Sending excessive requests to overload the system.\n\nFlooding (variante de DoS): HTTP flood/tráfico masivo para saturar el servidor con solicitudes aparentemente legítimas, causando denegación de servicio. En FairRideApp: bots podrían lanzar picos de /compare o /observations hasta agotar el pool de threads. (Cloudflare https://www.cloudflare.com/learning/ddos/http-flood-ddos-attack/)  \n\nWe will use rate limiting for every endpoint. Each IP will have a maximum number of allowed requests. If exceeded, the system will block that IP for a few minutes. Cloud firewall rules will protect against large-scale attacks."
+}, {
+  "ownerName" : " Tracebility ^ Avaiability",
+  "ownerType" : "Class",
+  "description" : "Keeps continuous access to logs and traceable system actions. \n\nEach user action will have a unique ID for tracing. Logs will be backed up daily to avoid loss. If the system goes down, we will use redundancy to keep it online. A monitoring tool will alert the admin in case of downtime."
+}, {
+  "ownerName" : "Secure Protocols",
+  "ownerType" : "Class",
+  "description" : "Uses HTTPS/TLS to encrypt communication channels. \n\nWe will use HTTPS for all connections. External APIs will be accessed through secure endpoints. Old and weak protocols (like HTTP) will not be accepted. Tokens will expire after short sessions for better protection."
+}, {
+  "ownerName" : "Input Validation",
+  "ownerType" : "Class",
+  "description" : "Prevents malicious data injection by checking all inputs. \n\nEvery form field will be checked before processing. Only numbers will be allowed for price and distance fields. Text inputs will have maximum length limits. Scripts or HTML will be blocked automatically."
+}, {
+  "ownerName" : "Encryption",
+  "ownerType" : "Class",
+  "description" : "Protects user and ride data during transmission and storage. \n\nWe will use AES-256 to encrypt data at rest and TLS 1.3 for data in transit. Keys will be stored in a secure vault. Decryption will happen only when needed for display. Backups will also be encrypted."
+}, {
+  "ownerName" : "MITM",
+  "ownerType" : "Class",
+  "description" : "Intercepting communications between the app and external services. \n\nMITM (man-in-the-middle): El atacante intercepta la comunicación entre cliente y servidor, creando dos conexiones y pudiendo leer/modificar tráfico. En FairRideApp: sin TLS estricto/HSTS, podría robar tokens o manipular resultados en tránsito. (OWASP https://owasp.org/www-community/attacks/Manipulator-in-the-middle_attack)  \n\nWe will use HTTPS and TLS for all communication. Certificate pinning will prevent fake servers. No data will be sent in plain text. We will renew security certificates regularly."
+}, {
+  "ownerName" : "SQL Injection",
+  "ownerType" : "Class",
+  "description" : "Attackers manipulate database queries to alter or steal data. \n\nSQL Injection: Inserción de consultas SQL a través de entradas para leer o modificar datos, ejecutar operaciones administrativas o incluso comandos del SO. En FairRideApp: comprometería PriceQuote, CrowdObservation o AuditEvent si no hay validación y consultas preparadas. (OWASP https://owasp.org/www-community/attacks/SQL_Injection)  \n\nWe will use prepared statements in all database queries. User input will be cleaned before sending to the database. No raw SQL will be executed directly. All special characters will be escaped automatically."
+}, {
+  "ownerName" : "Phishing",
+  "ownerType" : "Class",
+  "description" : "Attackers trick users into revealing credentials through fake pages.\n\nPhishing: Técnica social para que la víctima abra enlaces/adjuntos o entregue credenciales/datos, pudiendo infectar dispositivos. En FairRideApp: robo de cuentas de analistas o de administradores del panel/CI, seguido de abuso de API keys. (CISA https://www.cisa.gov/secure-our-world/recognize-and-report-phishing)  \n\nThe app will not send links asking for passwords. Official communication will only happen inside the app. We will educate users to check URLs before logging in. Multi-factor authentication will make stolen passwords useless."
+}, {
+  "ownerName" : "DoS",
+  "ownerType" : "Class",
+  "description" : "Flooding or overloading the system to make it unavailable.\n\nDoS (Denial of Service): Ataques orientados a hacer indisponible el servicio (agotando CPU, memoria, hilos o conexiones). En FairRideApp: peticiones masivas al endpoint /compare o a la pasarela de API impedirían comparar precios a usuarios legítimos. (OWASP https://owasp.org/www-community/attacks/Denial_of_Service)  \n\nWe will limit how many requests a user can send per minute. If too many requests come from the same IP, it will be blocked temporarily. Servers will have automatic scaling to handle many users. Monitoring tools will detect and stop DoS attempts."
+}, {
+  "ownerName" : "Price Manipulation",
+  "ownerType" : "Class",
+  "description" : "Modification or falsification of ride prices.\n\nPrice manipulation (manipulación de precios): Variante de parameter tampering: el atacante modifica parámetros/entradas (p. ej., precio, cantidad, flags) para alterar datos o lógica de negocio. En FairRideApp: envío de observaciones con campos manipulados para sesgar PriceQuote o el ranking “best ride”. (OWASP https://owasp.org/www-community/attacks/Web_Parameter_Tampering)  \n\n\nData will be cross-checked from multiple providers before showing prices. Any sudden change in one provider’s prices will trigger a warning. The app will verify data with community reports. Manipulated data will not be shown to users."
+}, {
+  "ownerName" : "Data Breach",
+  "ownerType" : "Class",
+  "description" : "Unauthorized access or leakage of personal user data.\n\nData Breach (violación de datos): Brecha de seguridad que provoca destrucción, pérdida, alteración, divulgación o acceso no autorizados a datos personales (definición GDPR). En FairRideApp: afectaría a User Data, TransparencyReport o claves de API si se exponen por fallo de configuración o fuga de logs. (ico.org.uk https://ico.org.uk/for-organisations/report-a-breach/personal-data-breach/personal-data-breaches-a-guide/)  \n\n\n\nWe will stop breaches by using encryption, HTTPS, and access control. If a breach happens, logs will show what data was accessed. We will inform users if their data is affected. Backups will be kept offline to prevent leaks."
+}, {
+  "ownerName" : "Transparency",
+  "ownerType" : "Class",
+  "description" : "Provides verifiable and clear comparisons for users and regulators. \n\nEvery comparison and validation result will be logged. The user can see the last 5 comparisons they made. The regulator can check if the app gives fair prices to everyone. We will show in the UI where the price data comes from."
+}, {
+  "ownerName" : "Integrity",
+  "ownerType" : "Class",
+  "description" : "Guarantees that ride data and prices are not altered during processing. \n\nWe will add checksum verification to every ride price before saving. Each transaction will be signed digitally to avoid tampering. If someone modifies a record, the system will detect it automatically. We will use secure database transactions to prevent partial updates."
+}, {
+  "ownerName" : "Confidentiality",
+  "ownerType" : "Class",
+  "description" : "Ensures that sensitive user data is not exposed to unauthorized entities. \n\nWe will encrypt user data using AES-256 before saving. Passwords will be hashed using SHA-256. Only authorized modules can read decrypted data. We will hide sensitive fields when data is displayed (like “****”). Database credentials will not be hardcoded in the app but stored securely."
+}, {
+  "ownerName" : "R4 – Auditability & Transparency",
+  "ownerType" : "Class",
+  "description" : "Record all relevant events to ensure accountability and traceability. \n\nWe will log all price comparisons and validation results. The regulator can see anonymized data to confirm fairness. Each action will have a timestamp and user ID in the logs. Reports can be exported as CSV or JSON for auditing. Transparency reports will show how many validations passed or failed. We will use color indicators (green = OK, red = problem) in the dashboard."
+}, {
+  "ownerName" : "R3 – Fair Pricing Validation",
+  "ownerType" : "Class",
+  "description" : "Validate that price data from different providers is correct and unbiased. \n\nThe app will compare prices from different providers for the same trip. We will collect real user reports to check if prices are real. If an external API sends suspicious data, it will be flagged. The system will use algorithms to detect price differences too big to be real. Users can report unfair prices directly through the app. All validation results will be stored in logs for future audits."
+}, {
+  "ownerName" : "R2 – Secure Authentication",
+  "ownerType" : "Class",
+  "description" : "Ensure only authorized users can access and use the system. \n\nUsers will have to log in before using any app function. Each session will have a token that expires after some time. If the password is wrong three times, the account will be locked temporarily. We will use salted hashes for password storage. The app will verify tokens before accepting any request. The server will check for repeated failed login attempts (brute-force detection)."
+}, {
+  "ownerName" : "R1 – Data Protection & Privacy",
+  "ownerType" : "Class",
+  "description" : "The system must protect user data during storage and transmission. \n\nWe will protect user data by encrypting it and not storing unnecessary details. Passwords will be hashed so they can’t be stolen. The app will ask for permission before using location data. We will use secure login (email and password, or Google sign-in). No sensitive data will be visible in network traffic because of HTTPS. The app will let users delete their account and data."
+}, {
+  "ownerName" : "API Gateway",
+  "ownerType" : "Class",
+  "description" : "Manages communication between the app and external ride services. \n\nThe API Gateway connects our app with Uber, Bolt, and PideTaxi,Cabify. It will use HTTPS so all data goes through an encrypted channel. We will add a security key (API token) to verify our requests. The gateway will limit the number of requests per minute to avoid overload. It will check the data before saving it to make sure it’s real and not fake. If an external app blocks our requests, the gateway will retry later automatically."
+}, {
+  "ownerName" : "Database",
+  "ownerType" : "Class",
+  "description" : "Stores user ride information and fare data securely. \n\nWe will use a secure cloud database that supports encryption. All sensitive fields, such as user ID and ride prices, will be stored in encrypted form. The database will have limited access — only the app and admin can connect. Data will be read and written through a secure API (not direct access). Old or duplicate data will be cleaned automatically. We will make daily backups to avoid data loss. SQL queries will be protected by input validation to stop SQL injection."
+}, {
+  "ownerName" : "User Data",
+  "ownerType" : "Class",
+  "description" : "Contains personal and location information shared by users for trip comparison. \n\nWe will store the user’s email, password, and location when they log in or search for a ride. All personal information will be encrypted before saving it in the database. Only the user can see their personal data in the app. We will not share user data with external companies. The system will delete location history after a short period to protect privacy. Data will only be used to compare ride prices. Access will require login with a secure password or token."
+}, {
+  "ownerName" : "FairRideApp_Domain",
+  "ownerType" : "Class",
+  "description" : "Create a mobile app , name ''FairRide'' , aim is to provide users with real time information regarding prices for taxi services for a requested trip.\n\nObjectives:\n\n-Get minimal user data , meaning we take from user as less data as possible for our app's functionality . What we need from user is to create an account in our app with a valid email address and location services accessibility.\n\n-Avoid price gouging\n\n-Implement security\n\n-Get trip request from user\n\n-Go to external services to find comparison prices for the same trip, this way we avoid price gouging factor by showing the user three best possible alternatice choices.\nBest result = cheapest price possible / least waiting time possible"
+}, {
+  "ownerName" : "Bypass Authentication",
+  "ownerType" : "UseCase",
+  "description" : "The attacker tries to enter the app without logging in or creating an account. They may use fake credentials or skip the login process to see private data."
+}, {
+  "ownerName" : "Steal User Data",
+  "ownerType" : "UseCase",
+  "description" : "\nThe attacker tries to break into user accounts or steal private data, like trip history or location. They do this by sending fake login forms or reading data without permission."
+}, {
+  "ownerName" : "Send Fake Data",
+  "ownerType" : "UseCase",
+  "description" : "The attacker tries to send false ride prices into the system, pretending they are real users. This could make some trips look cheaper or more expensive than they really are."
+}, {
+  "ownerName" : "Block Suspicious Requests",
+  "ownerType" : "UseCase",
+  "description" : "Detects and blocks comparison requests.External ride apps may detect many price requests from our system/bots at the same time for the same ride and decide to block them. This stops our users from getting real comparisons."
+}, {
+  "ownerName" : "compute_best_price_secure()",
+  "ownerType" : "UseCase",
+  "description" : "\nThe app checks if the ride prices collected from users and public data look real and match each other. If something seems wrong, it warns the user before showing results."
+}, {
+  "ownerName" : "Share Ride Info",
+  "ownerType" : "UseCase",
+  "description" : "\nUser contributes real ride data (crowdsourced)."
+}, {
+  "ownerName" : "Edit Profile & Privacy",
+  "ownerType" : "UseCase",
+  "description" : "Manage account and privacy options."
+}, {
+  "ownerName" : "Showresult",
+  "ownerType" : "UseCase",
+  "references" : [ {
+    "type" : "diagram",
+    "name" : "Show Price Comparison Requirements Spec",
+    "diagramType" : "ReportDiagram"
+  } ],
+  "description" : "The system fetches and displays available fares from multiple services."
+}, {
+  "ownerName" : "Validate Data",
+  "ownerType" : "UseCase",
+  "description" : "\nThe system checks user-submitted ride info for accuracy and tampering. "
+}, {
+  "ownerName" : "create_trip_request_secure()",
+  "ownerType" : "UseCase",
+  "description" : "The user requests a price comparison for a selected trip."
+}, {
+  "ownerName" : "compute_best_price_secure()",
+  "ownerType" : "UseCase",
+  "description" : "\nThe app checks if the ride prices collected from users and public data look real and match each other. If something seems wrong, it warns the user before showing results."
+}, {
+  "ownerName" : "Showresult",
+  "ownerType" : "UseCase",
+  "references" : [ {
+    "type" : "diagram",
+    "name" : "Show Price Comparison Requirements Spec",
+    "diagramType" : "ReportDiagram"
+  } ],
+  "description" : "The system fetches and displays available fares from multiple services."
+}, {
+  "ownerName" : "Share Ride Info",
+  "ownerType" : "UseCase",
+  "description" : "\nUser contributes real ride data (crowdsourced)."
+}, {
+  "ownerName" : "create_trip_request_secure()",
+  "ownerType" : "UseCase",
+  "description" : "The user requests a price comparison for a selected trip."
+}, {
+  "ownerName" : "Edit Profile & Privacy",
+  "ownerType" : "UseCase",
+  "description" : "Manage account and privacy options."
+} ]
+@endjson

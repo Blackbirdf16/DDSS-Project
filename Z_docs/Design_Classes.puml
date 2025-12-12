@@ -1,0 +1,46 @@
+@startuml
++class MonitoringService {
+}
++class Database <<confidential>> {
+}
++class ReportGenerator <<auditable>> {
+}
++class SecurityModule <<encrypted>> {
+}
++class APIService <<secureconnection>> {
+}
++class PriceComparator {
+}
++class DataValidator <<integrity>> {
+}
++class UserManager <<authenticated>> {
+}
++class FairRideApp <<umls_dm_domain>> {
+}
+note "<<authenticated>> = Requires user verification\n<<encrypted>> = Applies data encryption\n<<confidential>> = Handles sensitive data\n<<secureConnection>> = Uses HTTPS / TLS\n<<auditable>> = Generates reports and logs\n<<integrity>> = Ensures data correctness" as note_fPMPylmFS_iCcBG8
+note "Checks data accuracy and prevents manipulation." as note_Cnb3ylmFS_iCcBGY
+note "Communicates securely with external services.\n" as note_yU93ylmFS_iCcBGD
+note "Generates transparency and audit reports.\n" as note_lSO3ylmFS_iCcBFU
+note "Stores sensitive info securely.\n" as note_ida3ylmFS_iCcBFC
+note "Encrypts data before storage or transmission.\n" as note_FkM3ylmFS_iCcBEn
+note "Manages user login and authentication.\n" as note_nwo3ylmFS_iCcBEV
+UserManager ..> SecurityModule : <<use>>  
+SecurityModule -- Database : <<protects>>
+UserManager -- Database : <<interacts>>
+PriceComparator ..> DataValidator : <<use>>  
+APIService -- PriceComparator : <<sends data>>
+ReportGenerator -- Database : <<reads>>
+FairRideApp ..> UserManager : <<use>>  
+FairRideApp ..> ReportGenerator : <<use>>  
+FairRideApp ..> APIService : <<use>>  
+UserManager .. note_nwo3ylmFS_iCcBEV
+SecurityModule .. note_FkM3ylmFS_iCcBEn
+Database .. note_ida3ylmFS_iCcBFC
+note_lSO3ylmFS_iCcBFU .. ReportGenerator
+APIService .. note_yU93ylmFS_iCcBGD
+note_Cnb3ylmFS_iCcBGY .. DataValidator
+APIService ..> SecurityModule : <<use>>  
+ReportGenerator -- MonitoringService
+DataValidator ..> Database : <<use>>  
+APIService -- DataValidator
+@enduml

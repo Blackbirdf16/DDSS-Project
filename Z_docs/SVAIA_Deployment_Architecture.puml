@@ -1,0 +1,55 @@
+@startuml
+allowmixing
+node "External SwEng DB" as External_SwEng_DB {
+	component "SwEngDB Manager" as SwEngDB_Manager {
+	}
+	port "SwEngDB_API" as port_03_dVymGAqACTG4U
+}
+node "External Vunerability DB" as External_Vunerability_DB {
+	component "VDB Manager" as VDB_Manager {
+	}
+	port "VDB_API" as port_hwmUWMmD_AAAAQ1Y
+}
+node "SVAIA Server" as SVAIA_Server {
+	component DBPopulator {
+	}
+	component LocalDBManager {
+	}
+	component WebBackend {
+	}
+	artifact DB as DB
+	port "web" as port_8lrZURGGAqEGtx33
+	port "DBAccess" as port__565URGGAqEGtx44
+}
+node "AI Provider" as AI_Provider {
+	component AI {
+	}
+	port "AI_API" as port_Zbd4WMmD_AAAAQqL
+}
+node Browser {
+	component WebClient {
+	}
+}
+() "VDB API" as VDB_API
+() "AI API" as AI_API
+() "AI_DB_Interface"
+() WebInterface
+AI ..> port__565URGGAqEGtx44
+WebClient ..> port_8lrZURGGAqEGtx33
+WebBackend -- "1..*" LocalDBManager
+LocalDBManager -- DB
+LocalDBManager -- DBPopulator
+port_8lrZURGGAqEGtx33 -- WebInterface
+WebInterface <|.. WebBackend
+port__565URGGAqEGtx44 -- AI_DB_Interface
+AI_DB_Interface <|.. LocalDBManager
+Browser "*" -- SVAIA_Server
+SVAIA_Server -- "*" AI_Provider
+AI_API <|.. AI
+LocalDBManager ..> port_Zbd4WMmD_AAAAQqL
+port_Zbd4WMmD_AAAAQqL ..> AI_API : <<use>>  
+VDB_API <|.. VDB_Manager
+port_hwmUWMmD_AAAAQ1Y ..> VDB_API : <<use>>  
+DBPopulator ..> port_hwmUWMmD_AAAAQ1Y
+DBPopulator ..> port_03_dVymGAqACTG4U
+@enduml

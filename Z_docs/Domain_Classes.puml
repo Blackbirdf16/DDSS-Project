@@ -1,0 +1,61 @@
+@startuml
++class User {
+	- userId: String
+	- origin: String
+	- destination: String
+}
++class TripRequest {
+	- requestId: String
+	- origin: String
+	- destination: String
+	- timestamp: Date
+}
++class RideProvider {
+	- providerId: String
+	- name: String
+	- apiEndpoint: String
+	- authKey: String
+	- price: Float
+	- eta: Int
+}
++class PriceQuote {
+	- quoteId: String
+	- price: float
+	- timestamp: Date
+}
++class ComparisonResult {
+	- resultId: String
+	- bestPrice: float
+	- timestamp: Date
+}
++class "SecurityModule (domain service)" as SecurityModule__domain_service_ {
+	+encrypt(data: String): String
+	+decrypt(token: String): String
+	+validateIntegrity(data: String): Boolean
+}
++class DataValidator {
+	+validatePriceData(priceQuotes: List)
+	+validateProviderResponse(data: String): Boolean()
+}
++class "FairRideSystem
+" as FairRideSystem_ <<domain service >> {
+	+handleTripRequest(request: TripRequest): ComparisonResult()
+	+fetchProviderQuotes(request: TripRequest): List
+	+comparePrices(quotes: List): ComparisonResult
+}
+User "1" -- "*" TripRequest
+TripRequest "1" -- "*" PriceQuote
+PriceQuote "1" -- "1" RideProvider
+ComparisonResult "1" -- "*" PriceQuote
+TripRequest "1" -- "1" ComparisonResult
+SecurityModule__domain_service_ ..> TripRequest
+SecurityModule__domain_service_ ..> ComparisonResult
+SecurityModule__domain_service_ ..> PriceQuote
+DataValidator ..> PriceQuote
+DataValidator ..> RideProvider
+FairRideSystem_ ..> TripRequest
+FairRideSystem_ ..> DataValidator
+FairRideSystem_ ..> ComparisonResult
+FairRideSystem_ ..> PriceQuote
+FairRideSystem_ ..> User
+@enduml

@@ -1,0 +1,27 @@
+@startuml
+|Partition|
+start
+:Define function objective
+(Example: authenticate_user(), create_trip_request_secure(), etc.);
+:Define domain security knowledge
+(Required assets, threats, patterns);
+:Review Tropos and DSM models;
+:Select appropriate security pattern
+(e.g., Encryption, Input Validation, Secure Protocols);
+:Integrate selected pattern into the design;
+:Update test requirements (functional + security);
+|Partition3|
+:Generate initial baseline code (no security)
+(text-only prompt);
+:Generate unit tests (TDD);
+:Generate improved secure version of the code
+(using Tropos/DSM knowledge + security mechanisms);
+|Partition4|
+:Run automated unit tests;
+:Run static code analysis;
+:Run vulnerability scanning;
+|Partition5|
+:Commit secure version to repository;
+:Tag release / deployment candidate;
+stop
+@enduml
