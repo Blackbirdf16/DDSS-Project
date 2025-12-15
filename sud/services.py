@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, Tuple, Union
 
 from .config import SecurityConfig
 from .models import AuthResult, BestRideOption, PriceQuote, TripRequest, User
-from .rate_limit import RateLimiter
+from .rate_limit import RateLimiter, RateLimiterRedis
 from .security import (
     constant_time_equals,
     encrypt_at_rest,
@@ -64,9 +64,15 @@ class FairRideService:
         self.cfg = cfg
         self.db = db
         self.session_store = session_store  # None = in-memory token validation
-        self.login_rl = RateLimiter(cfg.login_max_attempts_per_minute)
-        self.trip_rl = RateLimiter(cfg.trip_max_requests_per_minute)
-        self.provider_rl = RateLimiter(cfg.provider_fetch_max_requests_per_minute)
+        # Use Redis-backed rate limiter if session_store is provided (production), else in-memory.
+        if self.session_store:
+            self.login_rl = RateLimiterRedis(cfg.login_max_attempts_per_minute)
+            self.trip_rl = RateLimiterRedis(cfg.trip_max_requests_per_minute)
+            self.provider_rl = RateLimiterRedis(cfg.provider_fetch_max_requests_per_minute)
+        else:
+            self.login_rl = RateLimiter(cfg.login_max_attempts_per_minute)
+            self.trip_rl = RateLimiter(cfg.trip_max_requests_per_minute)
+            self.provider_rl = RateLimiter(cfg.provider_fetch_max_requests_per_minute)
 
     # 1) Access control + confidentiality
     def authenticate_user(self, email: str, password: str, client_id: str) -> AuthResult:
