@@ -325,5 +325,3 @@ All tests follow the **STDD (Security-Driven Development)** methodology:
 3. Integrate CI/CD: Add pytest to GitHub Actions
 4. Performance testing: Load test rate limiter with high concurrency
 5. Security audit: Static analysis on cryptographic operations
-
->>>>>>> 6ad0a907b38600ba96002b6d97dbfc03b5af9cd4

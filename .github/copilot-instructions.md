@@ -8,28 +8,25 @@ DDSS-Project (Security-Driven Design Specification for FairRide) is an education
 ### Core Functions (sud/ module)
 The project implements four security-driven functions as the foundation:
 
-1. **Authentication** (`sud/auth.py`): PBKDF2-SHA256 password hashing with account lockout after 5 failed attempts
-2. **Trip Security** (`sud/trip_security.py`): Encrypts trip data using SHA-256-driven stream cipher, includes rate limiting via `SlidingWindowRateLimiter`
-3. **Pricing** (`sud/pricing.py`): Compares trip offers using deterministic logic (price → ETA as tiebreaker)
-4. **Validation** (`sud/validation.py`): Input validation for `TripRequest` (origin, destination, battery, max_wait)
+1. **Authentication** (`sud/services.py`, `sud/createuserID.py`): PBKDF2-SHA256 password hashing with account lockout after 5 failed attempts; high-level account APIs
+2. **Trip Security & Storage** (`sud/security.py`, `sud/providers.py`): AEAD encryption at-rest (Fernet) and provider HMAC verification; rate limiting via `RateLimiter`
+3. **Pricing** (`sud/services.py`): Compares trip offers using deterministic logic (price → ETA as tiebreaker)
+4. **Validation** (`sud/services.py` / helpers): Input validation for `TripRequest` (origin, destination, battery)
 
 ### Security Patterns Applied
-- **Access Control**: Authentication before any system access (sud/auth.py)
-- **Confidentiality**: Encryption of sensitive trip data (sud/trip_security.py, sud/crypto.py)
+ - **Access Control**: Authentication before any system access (`sud/services.py`, `sud/createuserID.py`)
+ - **Confidentiality**: Encryption of sensitive trip data (`sud/security.py`, Fernet AEAD)
 - **Integrity**: HMAC validation of price data; constant-time password comparison
 - **Resilience**: Rate limiting for provider requests; graceful handling of provider failures
 - **Auditability**: Deterministic price comparison and hashing of provider responses
 
 ### Cryptography Approach
-The project uses a SHA-256-driven stream cipher (not Fernet) in `sud/trip_security.py` for educational purposes. Key functions:
-- `_derive_key()`: HMAC-based key derivation
-- `_keystream()`: Counter-mode stream generation using SHA-256
-- `_encrypt_payload()` / `_decrypt_payload()`: XOR-based symmetric encryption with nonce and base64 encoding
+The project uses Fernet AEAD for at-rest encryption in `sud/security.py`. For educational transparency, an earlier implementation explored a SHA-256-driven stream cipher, but the production-grade AEAD approach (Fernet) is used by default.
 
 ## Development Patterns & Conventions
 
 ### Module Organization
-- `sud/`: Core security utilities and functions
+ - `sud/`: Core security utilities and functions (`services.py`, `security.py`, `providers.py`)
 - `tests/`: Unit tests (empty structure ready for implementation)
 - `Z_docs/`: PlantUML architecture diagrams (domain, design, deployment models)
 
@@ -43,14 +40,13 @@ def create_trip_request_secure(trip: TripRequest, encryption_key: str) -> Encryp
 Return types prioritize transparency: functions return structured objects (TripOffer, TripRequest dataclasses) with full traceability for security audits.
 
 ### Error Handling
-- Custom exceptions: `ValidationError` (sud/validation.py)
-- Validation is defensive: all inputs checked before crypto operations
-- Account lockout on failed authentication (sud/auth.py)
+ - Validation is defensive: all inputs checked before crypto operations (`sud/services.py`)
+ - Account lockout on failed authentication (handled in `sud/services.py` and exposed by `sud/createuserID.py`)
 
 ### Rate Limiting
-The `SlidingWindowRateLimiter` class enforces per-user limits on provider requests. Constructor:
+The `RateLimiter` class enforces per-subject limits on operations. Constructor:
 ```python
-SlidingWindowRateLimiter(limit=10, window_seconds=60, clock=time.time)
+RateLimiter(max_per_minute=10)
 ```
 
 ## Testing Strategy
@@ -61,18 +57,18 @@ Tests should verify three security properties per function:
 3. **Security property**: Sensitive data handling (no plaintext, constant-time comparisons, audit trail)
 
 Example test structure (from README):
-- `test_auth.py`: Reject invalid credentials, verify no credential leakage in logs
-- `test_trip_security.py`: Reject unauthenticated trip creation, verify encryption
-- `test_pricing.py`: Verify deterministic comparison, audit trail generation
-- `test_validation.py`: Malformed input rejection
+ - `test_authenticate_user.py`: Reject invalid credentials, verify no credential leakage in logs
+ - `test_createuserID.py`: Account lifecycle (create/login/logout)
+ - `test_prices.py`: Provider HMAC verification and resilience
+ - `test_compute_best.py`: Deterministic price computation
 
 ## External Dependencies & Integration
 
 ### Cryptography Library
-The project uses `cryptography` package (Fernet) in `sud/crypto.py` but implements custom stream cipher in `sud/trip_security.py` for educational transparency. Both approaches available—preserve this dual implementation for learning purposes.
+The project uses the `cryptography` package (Fernet) in `sud/security.py` for AEAD encryption; an educational stream cipher was explored but replaced by Fernet for secure defaults.
 
 ### Provider Integration
-Trip pricing aggregates data from multiple external providers. The `get_real_time_prices_from_providers()` function in `sud/trip_security.py`:
+- Trip pricing aggregates data from multiple external providers. The `get_real_time_prices_secure()` function in `sud/services.py`:
 - Fetches from untrusted sources
 - Validates integrity via HMAC hashing
 - Fails gracefully if providers unavailable
@@ -90,7 +86,7 @@ No explicit build or lint commands documented—project is Python-only, minimal 
 
 ## Design Decisions & Their "Why"
 
-1. **Custom Stream Cipher**: Educational transparency over production convenience. Preserves learning of cryptographic primitives.
+1. **AEAD (Fernet)**: Use tested AEAD primitives for at-rest encryption in `sud/security.py`.
 2. **Deterministic Price Logic**: Enables auditability—same inputs always produce same output, satisfying fairness requirement.
 3. **Rate Limiting on Requests**: Prevents provider abuse and DoS attacks on external services.
 4. **Constant-Time Password Comparison**: Mitigates timing attacks on authentication.
@@ -99,6 +95,7 @@ No explicit build or lint commands documented—project is Python-only, minimal 
 ## Key Files to Study First
 
 - [README.md](README.md): Security objectives and test cases for each function
-- [sud/auth.py](sud/auth.py): Template for secure authentication implementation
-- [sud/trip_security.py](sud/trip_security.py): Complex example of layered security (encryption + rate limiting + integrity checks)
-- [sud/pricing.py](sud/pricing.py): Simple, deterministic fair selection logic
+- [sud/services.py](sud/services.py): Main service functions for authentication, trip creation, provider queries, and price computation
+- [sud/security.py](sud/security.py): Cryptographic helpers (PBKDF2, HMAC, Fernet AEAD)
+- [sud/createuserID.py](sud/createuserID.py): User account management utilities
+- [sud/providers.py](sud/providers.py): Provider clients and mock implementations

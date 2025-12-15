@@ -1,218 +1,111 @@
-<<<<<<< HEAD
-# DDSS-Project
+﻿# DDSS-Project
 
-## FairRide – Secure Price Comparison Platform
-
-FairRide is a security-driven ride price comparison system designed to demonstrate Secure Software Development and STDD principles. The application allows users to securely authenticate, submit trip requests, retrieve real-time ride prices from external providers, and compute the best available option in a transparent and auditable way.
-
-The system prioritizes security from design to implementation by integrating access control, encryption, integrity validation, availability safeguards, and auditability into its core functionality. Each critical operation is implemented as a dedicated `_secure()` function and validated through automated tests that verify both functional correctness and security properties.
-
-FairRide is intended as an educational reference project, showcasing how threat modeling, security patterns, and testing strategies can be systematically applied throughout the software development lifecycle.
-
-
-Function 1 → Access control + confidentiality
-Function 2 → Secure data handling + encryption
-Function 3 → Integrity + availability + resilience
-Function 4 → Transparency + auditability + fairness
-1. authenticate_user()
-2. create_trip_request_secure()
-3. get_real_time_prices_secure()
-4. compute_best_price_secure()
-
-# Security-Driven Function Definition (SUD)
-
-This section describes the core system functions of the FairRide application, each aligned with specific security objectives following the STDD approach.
-
-
-## Function 1 – `authenticate_user()`
-
-### Objective  
-Ensure that only authorized users can access the FairRide system while protecting user credentials from disclosure, misuse, or impersonation.
-
-### Domain Knowledge  
-
-### Security Pattern  
-**Access Control with Confidential Credential Handling**  
-This pattern enforces authentication before access and protects credentials through secure handling mechanisms.
-
-### Associated Tests  
-
-
-## Function 2 – `create_trip_request_secure()`
-
-### Objective  
-Ensure that trip requests are created only by authenticated users and that sensitive trip data is securely handled and protected against leakage or manipulation.
-
-### Domain Knowledge  
-
-### Security Pattern  
-**Secure Data Handling with Encryption**  
-This pattern ensures that trip data is validated and encrypted to prevent unauthorized access or disclosure.
-
-### Associated Tests  
-
-
-## Function 3 – `get_real_time_prices_secure()`
-
-### Objective  
-Ensure that real-time price data obtained from external providers is accurate, available, and protected against manipulation or service disruption.
-
-### Domain Knowledge  
-
-### Security Pattern  
-**Integrity and Resilient Communication Pattern**  
-This pattern ensures data integrity, availability, and resilience when interacting with external services.
-
-### Associated Tests  
-
-
-## Function 4 – `compute_best_price_secure()`
-
-### Objective  
-Ensure that the best ride price is computed in a transparent, auditable, and fair manner, preventing manipulation or biased outcomes.
-
-### Domain Knowledge  
-
-### Security Pattern  
-**Auditable Decision and Transparency Pattern**  
-This pattern ensures that price computation is traceable, verifiable, and free from hidden manipulation.
-
-### Associated Tests  
-
-
-## Summary
-
-These four functions collectively cover access control, confidentiality, secure data handling, integrity, availability, resilience, transparency, and auditability.  
-They ensure that security is integrated throughout the system’s design and development lifecycle in accordance with the STDD methodology.
-
-
-
-Core functions are implemented and validated; tests pass (python -m pytest -q → 30 passed). Key code: services.py, security.py, createuserID.py, providers.py.
-In-memory storage: InMemoryDB and RateLimiter are ephemeral and not suitable for multi-node deployments; use persistent stores (DB, Redis).
-Transport, logging, monitoring: no enforced TLS, structured audit logs, or observability (needed in production).
-Recommended next steps (prioritized):
-1. Replace educational cipher with AES-GCM (via cryptography or Fernet) for encrypt_at_rest.
-2. Implement server-side session store (Redis or DB) and token revocation for logout.
-3. Move secrets out of code into environment variables or a secrets manager and implement rotation.
-4. Persist user data and rate-limiting (Postgres and Redis) to support scaling and durability.
-5. Add TLS, audit logging, monitoring, CI with tests (integration, fuzzing, performance).
-=======
-# DDSS-Project
-
-## FairRide – Secure Price Comparison Platform
+## FairRide  Secure Price Comparison Platform
 
 FairRide is a security-driven ride price comparison system designed to demonstrate Secure Software Development and STDD principles. The application allows users to securely authenticate, submit trip requests, retrieve real-time ride prices from external providers, and compute the best available option in a transparent and auditable way.
 
-The system prioritizes security from design to implementation by integrating access control, encryption, integrity validation, availability safeguards, and auditability into its core functionality. Each critical operation is implemented as a dedicated `_secure()` function and validated through automated tests that verify both functional correctness and security properties.
+The system prioritizes security from design to implementation by integrating access control, encryption, integrity validation, availability safeguards, and auditability into its core functionality. Each critical operation is implemented as a dedicated _secure() function and validated through automated tests that verify both functional correctness and security properties.
 
 FairRide is intended as an educational reference project, showcasing how threat modeling, security patterns, and testing strategies can be systematically applied throughout the software development lifecycle.
 
+## Core Security Functions
 
-Function 1 → Access control + confidentiality
-Function 2 → Secure data handling + encryption
-Function 3 → Integrity + availability + resilience
-Function 4 → Transparency + auditability + fairness
-1. authenticate_user()
-2. create_trip_request_secure()
-3. get_real_time_prices_secure()
-4. compute_best_price_secure()
+1. uthenticate_user()  Access control + confidentiality  
+2. create_trip_request_secure()  Secure data handling + encryption  
+3. get_real_time_prices_secure()  Integrity + availability + resilience  
+4. compute_best_price_secure()  Transparency + auditability + fairness
 
-# Security-Driven Function Definition (SUD)
+## Security-Driven Function Definition (SUD)
 
-This section describes the core system functions of the FairRide application, each aligned with specific security objectives following the STDD approach.
+### Function 1  \uthenticate_user()\
 
----
+**Objective:** Ensure that only authorized users can access the FairRide system while protecting user credentials from disclosure, misuse, or impersonation.
 
-## Function 1 – `authenticate_user()`
-
-### Objective  
-Ensure that only authorized users can access the FairRide system while protecting user credentials from disclosure, misuse, or impersonation.
-
-### Domain Knowledge  
+**Domain Knowledge:**
 - Users authenticate using credentials  
 - Credentials are sensitive data  
 - Authentication precedes any system interaction  
 - Sessions are established after successful login  
 
-### Security Pattern  
-**Access Control with Confidential Credential Handling**  
+**Security Pattern:** Access Control with Confidential Credential Handling  
 This pattern enforces authentication before access and protects credentials through secure handling mechanisms.
 
-### Associated Tests  
-- Reject access with invalid credentials  
-- Reject access when credentials are missing  
-- Ensure credentials are never exposed in logs  
+**Tests:** Reject invalid credentials, reject missing credentials, ensure credentials are never exposed in logs.
 
----
+### Function 2  \create_trip_request_secure()\
 
-## Function 2 – `create_trip_request_secure()`
+**Objective:** Ensure that trip requests are created only by authenticated users and that sensitive trip data is securely handled and protected against leakage or manipulation.
 
-### Objective  
-Ensure that trip requests are created only by authenticated users and that sensitive trip data is securely handled and protected against leakage or manipulation.
-
-### Domain Knowledge  
+**Domain Knowledge:**
 - TripRequest includes origin, destination, timestamp, and userId  
 - Location data is sensitive  
 - Only authenticated users may create trips  
 - Trip data is securely stored  
 
-### Security Pattern  
-**Secure Data Handling with Encryption**  
+**Security Pattern:** Secure Data Handling with Encryption  
 This pattern ensures that trip data is validated and encrypted to prevent unauthorized access or disclosure.
 
-### Associated Tests  
-- Reject trip creation without authentication  
-- Reject malformed or malicious trip input  
-- Verify that sensitive trip data is not stored in plaintext  
+**Tests:** Reject trip creation without authentication, reject malformed input, verify encrypted storage.
 
----
+### Function 3  \get_real_time_prices_secure()\
 
-## Function 3 – `get_real_time_prices_secure()`
+**Objective:** Ensure that real-time price data obtained from external providers is accurate, available, and protected against manipulation or service disruption.
 
-### Objective  
-Ensure that real-time price data obtained from external providers is accurate, available, and protected against manipulation or service disruption.
-
-### Domain Knowledge  
+**Domain Knowledge:**
 - Prices are retrieved from multiple external providers  
 - External data sources are untrusted  
 - Price data must be continuously available  
 - System must tolerate partial provider failures  
 
-### Security Pattern  
-**Integrity and Resilient Communication Pattern**  
+**Security Pattern:** Integrity and Resilient Communication Pattern  
 This pattern ensures data integrity, availability, and resilience when interacting with external services.
 
-### Associated Tests  
-- Reject price data that fails integrity validation  
-- Ensure system continues operating if a provider is unavailable  
-- Detect and block abnormal or inconsistent price responses  
+**Tests:** Reject data failing integrity validation, ensure availability on provider failure, detect abnormal responses.
 
----
+### Function 4  \compute_best_price_secure()\
 
-## Function 4 – `compute_best_price_secure()`
+**Objective:** Ensure that the best ride price is computed in a transparent, auditable, and fair manner, preventing manipulation or biased outcomes.
 
-### Objective  
-Ensure that the best ride price is computed in a transparent, auditable, and fair manner, preventing manipulation or biased outcomes.
-
-### Domain Knowledge  
+**Domain Knowledge:**
 - Multiple validated price quotes are compared  
 - Comparison logic must be deterministic  
 - Results must be traceable and explainable  
 - Users rely on the correctness of the result  
 
-### Security Pattern  
-**Auditable Decision and Transparency Pattern**  
+**Security Pattern:** Auditable Decision and Transparency Pattern  
 This pattern ensures that price computation is traceable, verifiable, and free from hidden manipulation.
 
-### Associated Tests  
-- Verify that identical inputs produce identical outputs  
-- Ensure the comparison process can be logged and audited  
-- Detect and reject inconsistent or tampered input data  
+**Tests:** Verify identical inputs produce identical outputs, ensure auditability, detect inconsistent data.
 
----
+## Implementation Status
 
-## Summary
+ **Complete**: All 4 core security functions implemented and tested.  
+ **All tests passing**: \python -m pytest tests/ -v\  **30 passed**  
+ **Encryption**: Fernet AEAD implemented in \sud/security.py\  
+ **Environment secrets**: Env-based config in \sud/config.py\  
 
-These four functions collectively cover access control, confidentiality, secure data handling, integrity, availability, resilience, transparency, and auditability.  
-They ensure that security is integrated throughout the system’s design and development lifecycle in accordance with the STDD methodology.
->>>>>>> 6ad0a907b38600ba96002b6d97dbfc03b5af9cd4
+**Key Files:** \sud/services.py\, \sud/security.py\, \sud/createuserID.py\, \sud/providers.py\
+
+**Note:** In-memory storage (InMemoryDB, RateLimiter) is suitable for development; production deployments should use persistent stores (PostgreSQL, Redis).
+
+## Dependencies
+
+See \equirements.txt\:
+- \cryptography>=41.0.0\  Fernet AEAD encryption
+- \pytest>=7.0.0\  Unit testing framework
+
+Install with: \pip install -r requirements.txt\
+
+## Running Tests
+
+\\\ash
+python -m pytest tests/ -v
+\\\
+
+## Next Steps (Prioritized)
+
+1.  Replace educational cipher with AEAD (Fernet AEAD implemented)
+2. Implement server-side session store (Redis or database) and token revocation
+3.  Move secrets to environment variables (implemented in \sud/config.py\)
+4. Persist user data and rate-limiting (PostgreSQL + Redis for production)
+5. Add TLS, structured audit logging, monitoring, and CI/CD pipeline
