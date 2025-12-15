@@ -68,17 +68,12 @@ class FairRideService:
         self.trip_rl = RateLimiter(cfg.trip_max_requests_per_minute)
         self.provider_rl = RateLimiter(cfg.provider_fetch_max_requests_per_minute)
 
-    # 1) Access control + confidentiality
-    def authenticate_user(self, email: str, password: str, client_id: str) -> AuthResult:
-        """Authenticate user with email and password; return session token.
+        st = mint_session_token(user.user_id, self.cfg.session_token_ttl_seconds)
         
-        If session_store (Redis) is available, session is stored there with TTL.
-        Otherwise, uses in-memory token validation (development mode).
-        """
-        if not self.login_rl.allow(subject=f"login:{client_id}"):
-            return AuthResult(ok=False, reason="rate_limited")
-
-        user = self.db.get_user_by_email(email)
+        # If Redis session store available, persist the session there
+        if self.session_store:
+            self.session_store.store_session(st.token, user.user_id, self.cfg.session_token_ttl_seconds)
+        
         if not user or not user.is_active:
             # do not leak which part failed
             return AuthResult(ok=False, reason="invalid_credentials")
@@ -88,11 +83,6 @@ class FairRideService:
             return AuthResult(ok=False, reason="invalid_credentials")
 
         st = mint_session_token(user.user_id, self.cfg.session_token_ttl_seconds)
-        
-        # If Redis session store available, persist the session there
-        if self.session_store:
-            self.session_store.store_session(st.token, user.user_id, self.cfg.session_token_ttl_seconds)
-        
         return AuthResult(ok=True, user_id=user.user_id, session_token=st.token)
 
     # 2) Secure data handling + encryption (at rest)

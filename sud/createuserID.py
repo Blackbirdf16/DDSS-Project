@@ -138,6 +138,7 @@ class UserManager:
 
         Security properties:
         - Removes session from active tracking
+        - If Redis session store is available, revokes token there
         - Prevents reuse of invalidated tokens
         - No error leakage if token is invalid
 
@@ -155,8 +156,14 @@ class UserManager:
             ...     print("Logged out successfully")
         """
         try:
+            # Remove from in-memory tracking
             if session_token in self.active_sessions:
                 del self.active_sessions[session_token]
+            
+            # If Redis session store is available, revoke the token there
+            if self.service.session_store:
+                self.service.session_store.revoke_session(session_token)
+            
             return True, None
         except Exception as e:
             return False, f"Logout failed: {str(e)}"
