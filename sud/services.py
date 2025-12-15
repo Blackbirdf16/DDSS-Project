@@ -1,6 +1,7 @@
 from __future__ import annotations
 import time
 import uuid
+import logging
 from typing import Dict, List, Optional, Tuple, Union
 
 from .config import SecurityConfig
@@ -64,6 +65,13 @@ class FairRideService:
         self.cfg = cfg
         self.db = db
         self.session_store = session_store  # None = in-memory token validation
+        self.log = logging.getLogger("fairride.service")
+        if not self.log.handlers:
+            handler = logging.StreamHandler()
+            formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s')
+            handler.setFormatter(formatter)
+            self.log.addHandler(handler)
+            self.log.setLevel(logging.INFO)
         # Use Redis-backed rate limiter if session_store is provided (production), else in-memory.
         if self.session_store:
             self.login_rl = RateLimiterRedis(cfg.login_max_attempts_per_minute)
@@ -98,6 +106,7 @@ class FairRideService:
         # If Redis session store available, persist the session there
         if self.session_store:
             self.session_store.store_session(st.token, user.user_id, self.cfg.session_token_ttl_seconds)
+        self.log.info("auth_success user_id=%s client_id=%s", user.user_id, client_id)
         
         return AuthResult(ok=True, user_id=user.user_id, session_token=st.token)
 
@@ -160,6 +169,7 @@ class FairRideService:
             # InMemoryDB only has trip_id and blob
             self.db.save_trip_encrypted(trip.trip_id, enc)
         
+        self.log.info("trip_create user_id=%s trip_id=%s origin=%s destination=%s", user_id, trip.trip_id, origin, destination)
         return trip
 
     # 3) Integrity + availability + resilience
@@ -203,6 +213,7 @@ class FairRideService:
 
         if not quotes:
             raise RuntimeError("no_quotes_available")
+        self.log.info("provider_quotes trip_id=%s quotes=%d", trip.trip_id, len(quotes))
         return quotes
 
     # 4) Transparency + auditability + fairness
@@ -233,4 +244,6 @@ class FairRideService:
 
         # sort stable and deterministic
         options_sorted = sorted(options, key=lambda o: (o.score, o.provider_id, o.quote_id))
-        return options_sorted[0], options_sorted[:3]
+        best = options_sorted[0]
+        self.log.info("compute_best best_provider=%s price=%.2f eta=%d score=%.3f", best.provider_id, best.price_eur, best.eta_minutes, best.score)
+        return best, options_sorted[:3]
