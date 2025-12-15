@@ -12,7 +12,7 @@ import time
 class RedisSessionStore:
     """Redis-backed persistent session store with revocation support."""
 
-    def __init__(self, redis_url: Optional[str] = None) -> None:
+    def __init__(self, redis_url: Optional[str] = None, client: Optional[object] = None) -> None:
         """Initialize Redis connection for session storage.
 
         Args:
@@ -24,7 +24,9 @@ class RedisSessionStore:
             redis_url = os.getenv("FAIRRIDE_REDIS_URL", "redis://localhost:6379/0")
 
         self.redis_url = redis_url
-        self._init_connection()
+        self.redis_client = client
+        if self.redis_client is None:
+            self._init_connection()
 
     def _init_connection(self) -> None:
         """Initialize Redis connection."""

@@ -288,3 +288,38 @@ Solution:
 3. Implement key rotation for SECURITY_AT_REST_KEY
 4. Set up automated backups
 5. Configure CI/CD pipeline with automated tests
+
+## Transport Security (TLS)
+
+FairRide is a Python library/service layer. When deploying behind a web API, ensure transport security:
+
+- Terminate TLS at a reverse proxy (e.g., NGINX, Envoy, AWS ALB) or in your ASGI/WSGI server.
+- Enforce HTTPS-only by redirecting HTTP to HTTPS and setting `Strict-Transport-Security` headers.
+- If your app makes outbound HTTP calls to providers, prefer `https://` endpoints and verify certificates.
+- For PostgreSQL, enable SSL by appending `?sslmode=require` to `FAIRRIDE_DB_URL` when supported by your DB setup.
+- For Redis over untrusted networks, use `rediss://` (TLS) and authentication.
+
+Example NGINX snippet enforcing HTTPS:
+
+```nginx
+server {
+  listen 80;
+  server_name example.com;
+  return 301 https://$host$request_uri;
+}
+
+server {
+  listen 443 ssl http2;
+  server_name example.com;
+  ssl_certificate /etc/letsencrypt/live/example.com/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
+  add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+
+  location / {
+    proxy_pass http://127.0.0.1:8000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  }
+}
+```

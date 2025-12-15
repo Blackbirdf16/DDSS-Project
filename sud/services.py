@@ -74,9 +74,11 @@ class FairRideService:
             self.log.setLevel(logging.INFO)
         # Use Redis-backed rate limiter if session_store is provided (production), else in-memory.
         if self.session_store:
-            self.login_rl = RateLimiterRedis(cfg.login_max_attempts_per_minute)
-            self.trip_rl = RateLimiterRedis(cfg.trip_max_requests_per_minute)
-            self.provider_rl = RateLimiterRedis(cfg.provider_fetch_max_requests_per_minute)
+            # Reuse Redis connection from session store when available
+            rc = getattr(self.session_store, "redis_client", None)
+            self.login_rl = RateLimiterRedis(cfg.login_max_attempts_per_minute, client=rc)
+            self.trip_rl = RateLimiterRedis(cfg.trip_max_requests_per_minute, client=rc)
+            self.provider_rl = RateLimiterRedis(cfg.provider_fetch_max_requests_per_minute, client=rc)
         else:
             self.login_rl = RateLimiter(cfg.login_max_attempts_per_minute)
             self.trip_rl = RateLimiter(cfg.trip_max_requests_per_minute)
@@ -90,15 +92,18 @@ class FairRideService:
         Otherwise, uses in-memory token validation (development mode).
         """
         if not self.login_rl.allow(subject=f"login:{client_id}"):
+            self.log.warning("auth_rate_limited client_id=%s", client_id)
             return AuthResult(ok=False, reason="rate_limited")
 
         user = self.db.get_user_by_email(email)
         if not user or not user.is_active:
             # do not leak which part failed
+            self.log.warning("auth_invalid user_or_inactive client_id=%s", client_id)
             return AuthResult(ok=False, reason="invalid_credentials")
 
         computed = pbkdf2_hash_password(password, user.password_salt, self.cfg.pbkdf2_iterations)
         if not constant_time_equals(computed, user.password_hash):
+            self.log.warning("auth_invalid bad_password user_id=%s client_id=%s", user.user_id, client_id)
             return AuthResult(ok=False, reason="invalid_credentials")
 
         st = mint_session_token(user.user_id, self.cfg.session_token_ttl_seconds)
@@ -128,19 +133,24 @@ class FairRideService:
         if self.session_store:
             user_id = self.session_store.get_session(session_token)
             if not user_id:
+                self.log.warning("trip_unauthorized client_id=%s", client_id)
                 raise PermissionError("unauthorized")
         else:
             if not validate_session_token(session_token):
+                self.log.warning("trip_unauthorized client_id=%s", client_id)
                 raise PermissionError("unauthorized")
             user_id = session_token.split(".", 1)[0]
 
         if not self.trip_rl.allow(subject=f"trip:{client_id}"):
+            self.log.warning("trip_rate_limited client_id=%s", client_id)
             raise RuntimeError("rate_limited")
 
         if not _validate_location(origin) or not _validate_location(destination):
+            self.log.warning("trip_invalid_location client_id=%s origin=%s destination=%s", client_id, origin, destination)
             raise ValueError("invalid_location")
 
         if not _validate_battery(battery_pct):
+            self.log.warning("trip_invalid_battery client_id=%s battery_pct=%s", client_id, battery_pct)
             raise ValueError("invalid_battery")
 
         trip = TripRequest(
@@ -189,12 +199,15 @@ class FairRideService:
         if self.session_store:
             user_id = self.session_store.get_session(session_token)
             if not user_id:
+                self.log.warning("providers_unauthorized client_id=%s", client_id)
                 raise PermissionError("unauthorized")
         else:
             if not validate_session_token(session_token):
+                self.log.warning("providers_unauthorized client_id=%s", client_id)
                 raise PermissionError("unauthorized")
 
         if not self.provider_rl.allow(subject=f"providers:{client_id}"):
+            self.log.warning("providers_rate_limited client_id=%s", client_id)
             raise RuntimeError("rate_limited")
 
         # Availability/resilience: only query up to N providers, tolerate failures
@@ -212,6 +225,7 @@ class FairRideService:
                 continue
 
         if not quotes:
+            self.log.warning("providers_no_quotes trip_id=%s", trip.trip_id)
             raise RuntimeError("no_quotes_available")
         self.log.info("provider_quotes trip_id=%s quotes=%d", trip.trip_id, len(quotes))
         return quotes

@@ -35,9 +35,13 @@ class RateLimiterRedis:
     """
     max_per_minute: int
     redis_url: Optional[str] = None
+    client: Optional[object] = None
     _client: any = field(init=False, repr=False)
 
     def __post_init__(self):
+        if self.client is not None:
+            self._client = self.client
+            return
         url = self.redis_url or __import__("os").getenv("FAIRRIDE_REDIS_URL", "redis://localhost:6379/0")
         try:
             import redis
