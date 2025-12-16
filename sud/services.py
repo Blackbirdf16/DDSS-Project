@@ -85,25 +85,29 @@ class FairRideService:
             self.provider_rl = RateLimiter(cfg.provider_fetch_max_requests_per_minute)
 
     # 1) Access control + confidentiality
-    def authenticate_user(self, email: str, password: str, client_id: str) -> AuthResult:
+    def authenticate_user(self, email: str, password: str, client_id: str, trace_id: Optional[str] = None) -> AuthResult:
         """Authenticate user with email and password; return session token.
         
         If session_store (Redis) is available, session is stored there with TTL.
         Otherwise, uses in-memory token validation (development mode).
+        
+        Args:
+            trace_id: Optional correlation ID for request tracing.
         """
+        trace_id = trace_id or str(uuid.uuid4())
         if not self.login_rl.allow(subject=f"login:{client_id}"):
-            self.log.warning("auth_rate_limited client_id=%s", client_id)
+            self.log.warning("auth_rate_limited client_id=%s trace_id=%s", client_id, trace_id)
             return AuthResult(ok=False, reason="rate_limited")
 
         user = self.db.get_user_by_email(email)
         if not user or not user.is_active:
             # do not leak which part failed
-            self.log.warning("auth_invalid user_or_inactive client_id=%s", client_id)
+            self.log.warning("auth_invalid user_or_inactive client_id=%s trace_id=%s", client_id, trace_id)
             return AuthResult(ok=False, reason="invalid_credentials")
 
         computed = pbkdf2_hash_password(password, user.password_salt, self.cfg.pbkdf2_iterations)
         if not constant_time_equals(computed, user.password_hash):
-            self.log.warning("auth_invalid bad_password user_id=%s client_id=%s", user.user_id, client_id)
+            self.log.warning("auth_invalid bad_password user_id=%s client_id=%s trace_id=%s", user.user_id, client_id, trace_id)
             return AuthResult(ok=False, reason="invalid_credentials")
 
         st = mint_session_token(user.user_id, self.cfg.session_token_ttl_seconds)
@@ -111,7 +115,7 @@ class FairRideService:
         # If Redis session store available, persist the session there
         if self.session_store:
             self.session_store.store_session(st.token, user.user_id, self.cfg.session_token_ttl_seconds)
-        self.log.info("auth_success user_id=%s client_id=%s", user.user_id, client_id)
+        self.log.info("auth_success user_id=%s client_id=%s trace_id=%s", user.user_id, client_id, trace_id)
         
         return AuthResult(ok=True, user_id=user.user_id, session_token=st.token)
 
@@ -124,33 +128,38 @@ class FairRideService:
         destination: str,
         battery_pct: Optional[int] = None,
         device_type: Optional[str] = None,
+        trace_id: Optional[str] = None,
     ) -> TripRequest:
         """Create an encrypted trip request for an authenticated user.
         
         Validates session token either via Redis session store or in-memory validation.
+        
+        Args:
+            trace_id: Optional correlation ID for request tracing.
         """
+        trace_id = trace_id or str(uuid.uuid4())
         # Validate session token
         if self.session_store:
             user_id = self.session_store.get_session(session_token)
             if not user_id:
-                self.log.warning("trip_unauthorized client_id=%s", client_id)
+                self.log.warning("trip_unauthorized client_id=%s trace_id=%s", client_id, trace_id)
                 raise PermissionError("unauthorized")
         else:
             if not validate_session_token(session_token):
-                self.log.warning("trip_unauthorized client_id=%s", client_id)
+                self.log.warning("trip_unauthorized client_id=%s trace_id=%s", client_id, trace_id)
                 raise PermissionError("unauthorized")
             user_id = session_token.split(".", 1)[0]
 
         if not self.trip_rl.allow(subject=f"trip:{client_id}"):
-            self.log.warning("trip_rate_limited client_id=%s", client_id)
+            self.log.warning("trip_rate_limited client_id=%s trace_id=%s", client_id, trace_id)
             raise RuntimeError("rate_limited")
 
         if not _validate_location(origin) or not _validate_location(destination):
-            self.log.warning("trip_invalid_location client_id=%s origin=%s destination=%s", client_id, origin, destination)
+            self.log.warning("trip_invalid_location client_id=%s origin=%s destination=%s trace_id=%s", client_id, origin, destination, trace_id)
             raise ValueError("invalid_location")
 
         if not _validate_battery(battery_pct):
-            self.log.warning("trip_invalid_battery client_id=%s battery_pct=%s", client_id, battery_pct)
+            self.log.warning("trip_invalid_battery client_id=%s battery_pct=%s trace_id=%s", client_id, battery_pct, trace_id)
             raise ValueError("invalid_battery")
 
         trip = TripRequest(
@@ -179,7 +188,7 @@ class FairRideService:
             # InMemoryDB only has trip_id and blob
             self.db.save_trip_encrypted(trip.trip_id, enc)
         
-        self.log.info("trip_create user_id=%s trip_id=%s origin=%s destination=%s", user_id, trip.trip_id, origin, destination)
+        self.log.info("trip_create user_id=%s trip_id=%s origin=%s destination=%s trace_id=%s", user_id, trip.trip_id, origin, destination, trace_id)
         return trip
 
     # 3) Integrity + availability + resilience
@@ -190,24 +199,29 @@ class FairRideService:
         trip: TripRequest,
         providers: List[ProviderClient],
         max_providers: int = 3,
+        trace_id: Optional[str] = None,
     ) -> List[PriceQuote]:
         """Fetch real-time prices from providers with integrity validation.
         
         Validates session token and enforces rate limiting per client.
+        
+        Args:
+            trace_id: Optional correlation ID for request tracing.
         """
+        trace_id = trace_id or str(uuid.uuid4())
         # Validate session token
         if self.session_store:
             user_id = self.session_store.get_session(session_token)
             if not user_id:
-                self.log.warning("providers_unauthorized client_id=%s", client_id)
+                self.log.warning("providers_unauthorized client_id=%s trace_id=%s", client_id, trace_id)
                 raise PermissionError("unauthorized")
         else:
             if not validate_session_token(session_token):
-                self.log.warning("providers_unauthorized client_id=%s", client_id)
+                self.log.warning("providers_unauthorized client_id=%s trace_id=%s", client_id, trace_id)
                 raise PermissionError("unauthorized")
 
         if not self.provider_rl.allow(subject=f"providers:{client_id}"):
-            self.log.warning("providers_rate_limited client_id=%s", client_id)
+            self.log.warning("providers_rate_limited client_id=%s trace_id=%s", client_id, trace_id)
             raise RuntimeError("rate_limited")
 
         # Availability/resilience: only query up to N providers, tolerate failures
@@ -225,13 +239,19 @@ class FairRideService:
                 continue
 
         if not quotes:
-            self.log.warning("providers_no_quotes trip_id=%s", trip.trip_id)
+            self.log.warning("providers_no_quotes trip_id=%s trace_id=%s", trip.trip_id, trace_id)
             raise RuntimeError("no_quotes_available")
-        self.log.info("provider_quotes trip_id=%s quotes=%d", trip.trip_id, len(quotes))
+        self.log.info("provider_quotes trip_id=%s quotes=%d trace_id=%s", trip.trip_id, len(quotes), trace_id)
         return quotes
 
     # 4) Transparency + auditability + fairness
-    def compute_best_price_secure(self, quotes: List[PriceQuote]) -> Tuple[BestRideOption, List[BestRideOption]]:
+    def compute_best_price_secure(self, quotes: List[PriceQuote], trace_id: Optional[str] = None) -> Tuple[BestRideOption, List[BestRideOption]]:
+        """Compute best price from quotes with deterministic scoring.
+        
+        Args:
+            trace_id: Optional correlation ID for request tracing.
+        """
+        trace_id = trace_id or str(uuid.uuid4())
         if not quotes:
             raise ValueError("no_quotes")
 
@@ -259,5 +279,5 @@ class FairRideService:
         # sort stable and deterministic
         options_sorted = sorted(options, key=lambda o: (o.score, o.provider_id, o.quote_id))
         best = options_sorted[0]
-        self.log.info("compute_best best_provider=%s price=%.2f eta=%d score=%.3f", best.provider_id, best.price_eur, best.eta_minutes, best.score)
+        self.log.info("compute_best best_provider=%s price=%.2f eta=%d score=%.3f trace_id=%s", best.provider_id, best.price_eur, best.eta_minutes, best.score, trace_id)
         return best, options_sorted[:3]

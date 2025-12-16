@@ -40,7 +40,31 @@ sudo service postgresql start
 # Download from https://www.postgresql.org/download/windows/
 ```
 
-#### Option B: PostgreSQL via Docker
+#### Option B: Docker Compose (Development - Recommended)
+
+Use the provided `docker-compose.yml` to start both PostgreSQL and Redis:
+
+```bash
+docker-compose up -d
+```
+
+This creates:
+- PostgreSQL on `localhost:5432` with database `fairride`
+- Redis on `localhost:6379`
+- Persistent volumes for data
+
+Set environment variables:
+```bash
+export FAIRRIDE_DB_URL="postgresql://fairride_user:fairride_dev_password@localhost:5432/fairride"
+export FAIRRIDE_REDIS_URL="redis://localhost:6379/0"
+```
+
+Run health check:
+```bash
+python healthcheck.py
+```
+
+#### Option C: PostgreSQL via Docker (Manual)
 
 ```bash
 docker run -d \

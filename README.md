@@ -88,9 +88,49 @@ This pattern ensures that price computation is traceable, verifiable, and free f
 
 **Note:** In-memory storage (InMemoryDB, RateLimiter) is suitable for development; production deployments should use persistent stores (PostgreSQL, Redis).
 
+## Quick Start
+
+### Development Mode (In-Memory)
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run tests
+python -m pytest -q
+```
+
+### Production Mode (PostgreSQL + Redis)
+
+Use Docker Compose for easy setup:
+
+```bash
+# Start PostgreSQL and Redis
+docker-compose up -d
+
+# Set environment variables
+export FAIRRIDE_DB_URL="postgresql://fairride_user:fairride_dev_password@localhost:5432/fairride"
+export FAIRRIDE_REDIS_URL="redis://localhost:6379/0"
+export FAIRRIDE_AT_REST_KEY="<base64-encoded-key>"
+export FAIRRIDE_SESSION_SECRET="<base64-encoded-secret>"
+export FAIRRIDE_PROVIDER_HMAC_KEY="<base64-encoded-key>"
+
+# Run health check
+python healthcheck.py
+
+# Initialize database
+python init_db.py
+
+# Run tests including integration
+python -m pytest -q
+```
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed production setup and [.env.example](.env.example) for environment variable configuration.
+
 ## Dependencies
 
-See \equirements.txt\:
+See \
+equirements.txt\:
 - \cryptography>=41.0.0\  Fernet AEAD encryption
 - \pytest>=7.0.0\  Unit testing framework
 
@@ -102,10 +142,16 @@ Install with: \pip install -r requirements.txt\
 python -m pytest tests/ -v
 \\\
 
-## Next Steps (Prioritized)
+## Next Steps (Production Enhancements)
 
-1.  Replace educational cipher with AEAD (Fernet AEAD implemented)
-2. Implement server-side session store (Redis or database) and token revocation
-3.  Move secrets to environment variables (implemented in \sud/config.py\)
-4. Persist user data and rate-limiting (PostgreSQL + Redis for production)
-5. Add TLS, structured audit logging, monitoring, and CI/CD pipeline
+1. ✅ Replace educational cipher with AEAD (Fernet AEAD implemented)
+2. ✅ Implement server-side session store (Redis implemented)
+3. ✅ Move secrets to environment variables (implemented in `sud/config.py`)
+4. ✅ Persist user data and rate-limiting (PostgreSQL + Redis implemented)
+5. ✅ Add TLS guidance, structured audit logging with correlation IDs, CI/CD pipeline
+
+**Optional Enhancements:**
+- Automated key rotation for cryptographic secrets
+- Enhanced monitoring and observability (metrics, distributed tracing)
+- Load balancer integration and horizontal scaling
+- Advanced threat detection and anomaly alerting
