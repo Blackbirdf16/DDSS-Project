@@ -1,7 +1,10 @@
 import axios from 'axios';
-import { API_BASE_URL, API_ENDPOINTS } from '../config/constants';
 
-// Create axios instance with default config
+// IMPORTANT: Replace YOUR_LOCAL_IP with your computer's IP address
+// Find it by running: ipconfig (Windows) or ifconfig (Mac/Linux)
+// Example: http://192.168.1.37:8000/api
+const API_BASE_URL = 'http://192.168.1.37:8000/api';
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
@@ -10,63 +13,43 @@ const api = axios.create({
   },
 });
 
-// Store session token
-let sessionToken = null;
-
-export const setSessionToken = (token) => {
-  sessionToken = token;
-  if (token) {
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-  } else {
-    delete api.defaults.headers.common['Authorization'];
-  }
-};
-
-export const getSessionToken = () => sessionToken;
-
-// API Functions
+// Authentication API
 export const authAPI = {
-  register: async (username, password, email) => {
-    const response = await api.post(API_ENDPOINTS.REGISTER, {
-      username,
-      password,
-      email:  email || username,
-    });
+  login: async (username, password) => {
+    const response = await api.post('/auth/login', { username, password });
     return response.data;
   },
 
-  login: async (username, password) => {
-    const response = await api.post(API_ENDPOINTS.LOGIN, {
+  register: async (username, email, password) => {
+    const response = await api.post('/auth/register', {
       username,
+      email,
       password,
     });
-    if (response.data.session_token) {
-      setSessionToken(response.data.session_token);
-    }
     return response.data;
   },
 
   logout: async () => {
-    try {
-      await api.post(API_ENDPOINTS.LOGOUT);
-    } finally {
-      setSessionToken(null);
-    }
+    const response = await api.post('/auth/logout');
+    return response. data;
   },
 };
 
+// Trip API
 export const tripAPI = {
-  createTrip: async (origin, destination) => {
-    const response = await api.post(API_ENDPOINTS.CREATE_TRIP, {
-      origin,
-      destination,
-    });
+  createTrip:  async (tripData) => {
+    const response = await api.post('/trips', tripData);
     return response.data;
   },
 
   getPrices: async (tripId) => {
-    const response = await api.get(`${API_ENDPOINTS.GET_PRICES}/${tripId}/prices`);
+    const response = await api.get(`/trips/${tripId}/prices`);
     return response.data;
+  },
+
+  getTripHistory: async () => {
+    const response = await api.get('/trips/user/history');
+    return response. data;
   },
 };
 

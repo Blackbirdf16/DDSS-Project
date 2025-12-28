@@ -1,182 +1,242 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+  TouchableOpacity,
+  Alert,
+  TextInput,
+} from 'react-native';
+import { tripAPI } from '../services/api';
+
+export default function PriceComparisonScreen({ navigation }) {
+  const [loading, setLoading] = useState(false);
+  const [prices, setPrices] = useState([]);
+  const [origin, setOrigin] = useState('');
+  const [destination, setDestination] = useState('');
+
+  const handleComparePrices = async () => {
+    if (!origin || ! destination) {
+      Alert.alert('Error', 'Please enter both origin and destination');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Create trip request first
+      const tripData = {
+        origin,
+        destination,
+        passenger_count: 1,
+      };
+
+      const tripResult = await tripAPI.createTrip(tripData);
+      const tripId = tripResult.trip_id;
+
+      // Get price comparisons
+      const priceResult = await tripAPI.getPrices(tripId);
+      setPrices(priceResult.prices || []);
+    } catch (error) {
+      console.error('Price comparison error:', error);
+      Alert.alert(
+        'Error',
+        error.response?.data?.detail || 'Could not fetch prices'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderPriceItem = ({ item }) => (
+    <View style={styles.priceCard}>
+      <Text style={styles.providerName}>{item.provider}</Text>
+      <Text style={styles.priceAmount}>${item.price. toFixed(2)}</Text>
+      <Text style={styles. estimatedTime}>
+        Est. Time: {item.estimated_time} min
+      </Text>
+      <TouchableOpacity style={styles.selectButton}>
+        <Text style={styles. selectButtonText}>Select</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={styles.backButton}>← Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.title}>💰 Compare Prices</Text>
+      </View>
+
+      <View style={styles.formContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Origin (e.g., 123 Main St)"
+          placeholderTextColor="#94a3b8"
+          value={origin}
+          onChangeText={setOrigin}
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="Destination (e.g., 456 Park Ave)"
+          placeholderTextColor="#94a3b8"
+          value={destination}
+          onChangeText={setDestination}
+        />
+
+        <TouchableOpacity
+          style={[styles.compareButton, loading && styles.buttonDisabled]}
+          onPress={handleComparePrices}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.compareButtonText}>Compare Prices</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {prices.length > 0 && (
+        <View style={styles.resultsContainer}>
+          <Text style={styles.resultsTitle}>
+            Found {prices.length} options
+          </Text>
+          <FlatList
+            data={prices}
+            renderItem={renderPriceItem}
+            keyExtractor={(item, index) => index.toString()}
+            contentContainerStyle={styles. listContainer}
+          />
+        </View>
+      )}
+
+      {! loading && prices.length === 0 && origin && destination && (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>
+            Enter origin and destination to compare prices
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
-    flex:  1,
-    backgroundColor: '#0f172a',
-  },
-  centerContainer: {
     flex: 1,
-    justifyContent:  'center',
-    alignItems: 'center',
-    padding: 20,
     backgroundColor: '#0f172a',
   },
-  content: {
+  header: {
     padding: 20,
+    paddingTop: 40,
   },
-  loadingText: {
-    marginTop: 15,
+  backButton: {
+    color: '#f59e0b',
     fontSize: 16,
-    color: '#94a3b8',
-  },
-  errorText: {
-    fontSize: 18,
-    color: '#ef4444',
-    textAlign:  'center',
-    marginBottom: 20,
-  },
-  retryButton: {
-    backgroundColor: '#f59e0b',
-    paddingHorizontal: 30,
-    paddingVertical:  12,
-    borderRadius: 10,
-  },
-  retryButtonText:  {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  tripInfo: {
-    backgroundColor: '#1e293b',
-    padding: 20,
-    borderRadius: 15,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity:  0.3,
-    shadowRadius: 8,
-    elevation: 8,
-    borderWidth: 1,
-    borderColor: '#334155',
-  },
-  tripTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom:  15,
-    color: '#ffffff',
-  },
-  locationRow: {
-    flexDirection: 'row',
-    marginBottom: 8,
-  },
-  locationLabel: {
-    fontSize: 14,
     fontWeight: '600',
-    color: '#94a3b8',
-    width: 60,
-  },
-  locationText: {
-    flex: 1,
-    fontSize: 14,
-    color:  '#cbd5e1',
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#ffffff',
-  },
-  quoteCard: {
-    backgroundColor: '#1e293b',
-    padding:  20,
-    borderRadius:  15,
-    marginBottom:  15,
-    borderWidth: 2,
-    borderColor: '#334155',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity:  0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  bestQuoteCard: {
-    borderColor: '#10b981',
-    backgroundColor: '#1e293b',
-    shadowColor: '#10b981',
-  },
-  bestBadge: {
-    backgroundColor: '#10b981',
-    paddingHorizontal: 12,
-    paddingVertical:  6,
-    borderRadius:  20,
-    alignSelf: 'flex-start',
     marginBottom: 10,
   },
-  bestBadgeText: {
-    color: '#fff',
-    fontSize:  12,
-    fontWeight:  'bold',
-  },
-  quoteHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom:  15,
-  },
-  providerName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#ffffff',
-  },
-  price: {
+  title:  {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#f59e0b',
-  },
-  bestPrice: {
-    color: '#10b981',
-  },
-  quoteDetails: {
-    marginBottom: 10,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  detailLabel: {
-    fontSize: 14,
-    color: '#94a3b8',
-  },
-  detailValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#cbd5e1',
-  },
-  savingsText: {
-    marginTop: 10,
-    fontSize: 14,
-    color: '#10b981',
-    fontWeight: '600',
+    color: '#ffffff',
     textAlign: 'center',
   },
-  newSearchButton: {
+  formContainer: {
+    padding: 20,
+    backgroundColor: '#1e293b',
+    margin: 20,
+    borderRadius: 16,
+  },
+  input: {
+    backgroundColor: '#334155',
+    color: '#ffffff',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#475569',
+  },
+  compareButton: {
     backgroundColor: '#f59e0b',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 20,
-    shadowColor: '#f59e0b',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    marginTop: 8,
   },
-  newSearchButtonText: {
-    color: '#fff',
+  buttonDisabled: {
+    backgroundColor: '#92400e',
+    opacity: 0.6,
+  },
+  compareButtonText: {
+    color:  '#ffffff',
     fontSize: 16,
     fontWeight: 'bold',
   },
-  securityNote: {
-    backgroundColor: '#1e293b',
-    padding: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#3b82f6',
+  resultsContainer: {
+    flex: 1,
+    padding:  20,
   },
-  securityText: {
-    fontSize: 12,
-    color:  '#3b82f6',
+  resultsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#f59e0b',
+    marginBottom:  16,
+  },
+  listContainer: {
+    paddingBottom: 20,
+  },
+  priceCard: {
+    backgroundColor:  '#1e293b',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  providerName: {
+    fontSize:  20,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 8,
+  },
+  priceAmount: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#f59e0b',
+    marginBottom: 8,
+  },
+  estimatedTime: {
+    fontSize: 14,
+    color: '#cbd5e1',
+    marginBottom: 12,
+  },
+  selectButton: {
+    backgroundColor: '#10b981',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  selectButtonText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  emptyState: {
+    flex:  1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyText: {
+    color: '#94a3b8',
+    fontSize: 16,
     textAlign: 'center',
   },
 });

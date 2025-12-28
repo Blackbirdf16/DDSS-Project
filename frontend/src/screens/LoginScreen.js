@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from 'react-native';
 import { authAPI } from '../services/api';
 
@@ -47,8 +48,15 @@ export default function LoginScreen({ navigation }) {
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
-          <Text style={styles.appTitle}>🚕 FAIRRIDE</Text>
-          <Text style={styles.welcomeText}>Welcome to FairRide</Text>
+          {/* Logo */}
+          <View style={styles.logoContainer}>
+            <Image
+              source={require('../../assets/images/fairride-logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
+<Text style={styles.welcomeText}>Welcome</Text>
           <Text style={styles.subtitle}>Get a Fair Price, Every Time</Text>
 
           <View style={styles.formContainer}>
@@ -107,7 +115,7 @@ export default function LoginScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flex:  1,
     backgroundColor: '#0f172a',
   },
   scrollContent: {
@@ -118,6 +126,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
     paddingTop: 40,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom:  20,
+  },
+  logo: {
+    width: 200,
+    height: 200,
   },
   appTitle: {
     fontSize: 48,
@@ -134,7 +150,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     marginBottom: 8,
   },
-  subtitle: {
+  subtitle:  {
     fontSize: 18,
     textAlign: 'center',
     marginBottom: 40,
@@ -143,22 +159,22 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     backgroundColor: '#1e293b',
-    padding: 24,
+    padding:  24,
     borderRadius: 20,
-    marginBottom: 20,
+    marginBottom: 30,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity:  0.3,
     shadowRadius: 8,
     elevation: 8,
   },
-  input: {
+  input:  {
     backgroundColor: '#334155',
     color: '#ffffff',
     padding: 16,
     borderRadius: 12,
     marginBottom: 16,
-    fontSize: 16,
+    fontSize:  16,
     borderWidth: 1,
     borderColor: '#475569',
   },
@@ -170,7 +186,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     shadowColor: '#f59e0b',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity:  0.3,
     shadowRadius: 8,
     elevation: 6,
   },
@@ -179,7 +195,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: '#ffffff',
+    color:  '#ffffff',
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -189,7 +205,7 @@ const styles = StyleSheet.create({
   },
   linkText: {
     color: '#cbd5e1',
-    fontSize: 15,
+    fontSize:  15,
   },
   linkTextBold:  {
     color: '#f59e0b',

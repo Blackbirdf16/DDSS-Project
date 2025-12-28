@@ -22,13 +22,8 @@ export default function RegisterScreen({ navigation }) {
 
   const handleRegister = async () => {
     // Validation
-    if (!username || !password) {
-      Alert.alert('Error', 'Please enter username and password');
-      return;
-    }
-
-    if (password. length < 8) {
-      Alert.alert('Error', 'Password must be at least 8 characters');
+    if (!username || !email || !password || !confirmPassword) {
+      Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
@@ -37,16 +32,21 @@ export default function RegisterScreen({ navigation }) {
       return;
     }
 
+    if (password.length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters');
+      return;
+    }
+
     setLoading(true);
     try {
-      const result = await authAPI.register(username, password, email);
+      const result = await authAPI.register(username, email, password);
       Alert.alert(
         'Success',
-        'Account created successfully! You can now login.',
+        'Account created successfully! Please login.',
         [
           {
             text: 'OK',
-            onPress: () => navigation.navigate('Login'),
+            onPress: () => navigation.replace('Login'),
           },
         ]
       );
@@ -54,7 +54,7 @@ export default function RegisterScreen({ navigation }) {
       console.error('Registration error:', error);
       Alert.alert(
         'Registration Failed',
-        error.response?.data?.detail || 'Failed to create account'
+        error.response?.data?.detail || 'Could not create account'
       );
     } finally {
       setLoading(false);
@@ -68,64 +68,71 @@ export default function RegisterScreen({ navigation }) {
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join FairRide today</Text>
+          <Text style={styles.appTitle}>🚕 FAIRRIDE</Text>
+          <Text style={styles. welcomeText}>Create Account</Text>
+          <Text style={styles.subtitle}>Join FairRide Today</Text>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Username"
-            value={username}
-            onChangeText={setUsername}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
+          <View style={styles.formContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Username"
+              placeholderTextColor="#94a3b8"
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
 
-          <TextInput
-            style={styles.input}
-            placeholder="Email (optional)"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            autoCorrect={false}
-          />
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor="#94a3b8"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              autoCorrect={false}
+            />
 
-          <TextInput
-            style={styles.input}
-            placeholder="Password (min 8 characters)"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            autoCapitalize="none"
-          />
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              placeholderTextColor="#94a3b8"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoCapitalize="none"
+            />
 
-          <TextInput
-            style={styles.input}
-            placeholder="Confirm Password"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry
-            autoCapitalize="none"
-          />
+            <TextInput
+              style={styles.input}
+              placeholder="Confirm Password"
+              placeholderTextColor="#94a3b8"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+              autoCapitalize="none"
+            />
 
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleRegister}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Create Account</Text>
-            )}
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, loading && styles.buttonDisabled]}
+              onPress={handleRegister}
+              disabled={loading}
+            >
+              {loading ?  (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Register</Text>
+              )}
+            </TouchableOpacity>
+          </View>
 
           <TouchableOpacity
             style={styles.linkButton}
             onPress={() => navigation.navigate('Login')}
           >
-            <Text style={styles.linkText}>
-              Already have an account? Login
+            <Text style={styles. linkText}>
+              Already have an account? <Text style={styles. linkTextBold}>Login</Text>
             </Text>
           </TouchableOpacity>
         </View>
@@ -134,62 +141,94 @@ export default function RegisterScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = StyleSheet. create({
   container: {
-    flex:  1,
-    backgroundColor: '#f3f4f6',
+    flex: 1,
+    backgroundColor: '#0f172a',
   },
-  scrollContent: {
+  scrollContent:  {
     flexGrow: 1,
   },
   content: {
     flex: 1,
     justifyContent: 'center',
     padding: 20,
+    paddingTop:  40,
   },
-  title: {
-    fontSize:  32,
-    fontWeight: 'bold',
+  appTitle: {
+    fontSize:  48,
+    fontWeight:  'bold',
     textAlign: 'center',
+    color: '#f59e0b',
     marginBottom: 10,
-    color: '#1f2937',
+    letterSpacing: 2,
+  },
+  welcomeText: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    textAlign:  'center',
+    color:  '#ffffff',
+    marginBottom:  8,
   },
   subtitle: {
-    fontSize:  16,
-    textAlign:  'center',
-    marginBottom: 30,
-    color: '#6b7280',
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom:  40,
+    color: '#f59e0b',
+    fontWeight: '600',
+  },
+  formContainer: {
+    backgroundColor: '#1e293b',
+    padding: 24,
+    borderRadius: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width:  0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation:  8,
   },
   input: {
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 15,
+    backgroundColor: '#334155',
+    color: '#ffffff',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: '#475569',
   },
-  button: {
-    backgroundColor: '#2563eb',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 10,
+  button:  {
+    backgroundColor: '#f59e0b',
+    padding:  16,
+    borderRadius:  12,
+    alignItems:  'center',
+    marginTop: 8,
+    shadowColor: '#f59e0b',
+    shadowOffset: { width:  0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation:  6,
   },
   buttonDisabled: {
-    backgroundColor: '#93c5fd',
+    backgroundColor: '#92400e',
+    opacity: 0.6,
   },
   buttonText: {
-    color: '#fff',
+    color: '#ffffff',
     fontSize: 18,
     fontWeight: 'bold',
   },
   linkButton: {
-    marginTop: 20,
+    marginTop: 24,
     alignItems: 'center',
   },
   linkText: {
-    color: '#2563eb',
-    fontSize: 16,
+    color: '#cbd5e1',
+    fontSize:  15,
+  },
+  linkTextBold: {
+    color: '#f59e0b',
+    fontWeight: 'bold',
   },
 });
