@@ -1,100 +1,166 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
+  TextInput,
   TouchableOpacity,
+  StyleSheet,
   ScrollView,
+  Alert,
+  Image,
 } from 'react-native';
 
 export default function DashboardScreen({ navigation }) {
-  const handleLogout = () => {
-    // Navigate back to login
-    navigation.replace('Login');
+  const [pickup, setPickup] = useState('');
+  const [destination, setDestination] = useState('');
+
+  const handleComparePrices = () => {
+    if (! pickup || !destination) {
+      Alert.alert('Error', 'Please enter both pickup and destination locations');
+      return;
+    }
+
+    navigation.navigate('PriceComparison', {
+      pickup,
+      destination,
+    });
   };
 
-  const handleCompareRides = () => {
-    // Navigate to price comparison screen
-    navigation.navigate('PriceComparison');
+  const handleTripHistory = () => {
+    Alert.alert(
+      'Trip History',
+      'No previous trips yet. Start comparing prices to build your history!'
+    );
+  };
+
+  const handleSavedRoutes = () => {
+    Alert.alert(
+      'Saved Routes',
+      'No saved routes yet. Complete trips to save your favorite routes!'
+    );
   };
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles. content}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.appTitle}>🚕 FAIRRIDE</Text>
-          <Text style={styles.welcomeText}>Dashboard</Text>
-          <Text style={styles.subtitle}>Get a Fair Price, Every Time</Text>
+      {/* Header with YOUR Logo */}
+      <View style={styles.header}>
+        <Image
+          source={require('../../assets/images/logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        <View style={styles.titleContainer}>
+          <Text style={styles.titleFair}>FAIR</Text>
+          <Text style={styles.titleRide}>RIDE</Text>
         </View>
+        <Text style={styles.subtitle}>Get a Fair Price, Every Time</Text>
+        <View style={styles.regionBadge}>
+          <Text style={styles.regionText}>🇪🇸 Spain • €</Text>
+        </View>
+      </View>
 
-        {/* Main Content Cards */}
-        <View style={styles.cardContainer}>
-          {/* Compare Prices Card */}
+      {/* Main Content */}
+      <View style={styles.content}>
+        {/* Compare Prices Section - NO MONEY BAG! */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <View style={styles.iconContainer}>
+              <Text style={styles.cardIcon}>📍</Text>
+            </View>
+            <Text style={styles. cardTitle}>Compare Prices</Text>
+          </View>
+          
+          <Text style={styles.cardDescription}>
+            Find the best ride-sharing deals across multiple providers
+          </Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Pickup Location (e.g., Puerta del Sol, Madrid)"
+            placeholderTextColor="#94a3b8"
+            value={pickup}
+            onChangeText={setPickup}
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="Destination (e.g., Madrid-Barajas Airport)"
+            placeholderTextColor="#94a3b8"
+            value={destination}
+            onChangeText={setDestination}
+          />
+
           <TouchableOpacity
-            style={styles.card}
-            onPress={handleCompareRides}
+            style={styles.compareButton}
+            onPress={handleComparePrices}
           >
-            <Text style={styles.cardIcon}>💰</Text>
-            <Text style={styles.cardTitle}>Compare Prices</Text>
-            <Text style={styles.cardDescription}>
-              Find the best ride-sharing deals across multiple providers
-            </Text>
+            <Text style={styles.compareButtonText}>Compare Prices</Text>
           </TouchableOpacity>
 
-          {/* Trip History Card */}
-          <TouchableOpacity style={styles.card}>
-            <Text style={styles. cardIcon}>📊</Text>
-            <Text style={styles.cardTitle}>Trip History</Text>
-            <Text style={styles.cardDescription}>
-              View your previous rides and price comparisons
-            </Text>
-          </TouchableOpacity>
-
-          {/* Saved Routes Card */}
-          <TouchableOpacity style={styles.card}>
-            <Text style={styles. cardIcon}>⭐</Text>
-            <Text style={styles.cardTitle}>Saved Routes</Text>
-            <Text style={styles.cardDescription}>
-              Quick access to your frequently used routes
-            </Text>
-          </TouchableOpacity>
-
-          {/* Settings Card */}
-          <TouchableOpacity style={styles.card}>
-            <Text style={styles.cardIcon}>⚙️</Text>
-            <Text style={styles.cardTitle}>Settings</Text>
-            <Text style={styles.cardDescription}>
-              Manage your account and preferences
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Quick Stats */}
-        <View style={styles.statsContainer}>
-          <Text style={styles.statsTitle}>Your Stats</Text>
-          <View style={styles.statsGrid}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>12</Text>
-              <Text style={styles.statLabel}>Total Trips</Text>
-            </View>
-            <View style={styles. statItem}>
-              <Text style={styles.statValue}>$127</Text>
-              <Text style={styles.statLabel}>Money Saved</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>8</Text>
-              <Text style={styles.statLabel}>This Month</Text>
+          {/* Available Providers */}
+          <View style={styles.pricePreview}>
+            <Text style={styles.pricePreviewLabel}>Available providers in Spain:</Text>
+            <View style={styles.providerTags}>
+              <View style={[styles.providerTag, { backgroundColor: '#000000' }]}>
+                <Text style={styles.providerTagText}>Uber</Text>
+              </View>
+              <View style={[styles.providerTag, { backgroundColor: '#6C1C99' }]}>
+                <Text style={styles.providerTagText}>Cabify</Text>
+              </View>
+              <View style={[styles.providerTag, { backgroundColor: '#FFC933' }]}>
+                <Text style={[styles.providerTagText, { color: '#000' }]}>FREE NOW</Text>
+              </View>
+              <View style={[styles.providerTag, { backgroundColor: '#34D186' }]}>
+                <Text style={[styles.providerTagText, { color: '#000' }]}>Bolt</Text>
+              </View>
             </View>
           </View>
         </View>
 
-        {/* Logout Button */}
+        {/* Trip History Section */}
         <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={handleLogout}
+          style={styles.card}
+          onPress={handleTripHistory}
+          activeOpacity={0.7}
         >
-          <Text style={styles.logoutButtonText}>🚪 Logout</Text>
+          <View style={styles.cardHeader}>
+            <View style={styles.iconContainer}>
+              <Text style={styles.cardIcon}>🕒</Text>
+            </View>
+            <Text style={styles. cardTitle}>Trip History</Text>
+          </View>
+          <Text style={styles.cardDescription}>
+            View your previous rides and price comparisons
+          </Text>
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>No trips yet</Text>
+            <Text style={styles.emptyStateSubtext}>
+              Start comparing prices to see your history
+            </Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* Saved Routes Section */}
+        <TouchableOpacity
+          style={styles.card}
+          onPress={handleSavedRoutes}
+          activeOpacity={0.7}
+        >
+          <View style={styles.cardHeader}>
+            <View style={styles.iconContainer}>
+              <Text style={styles.cardIcon}>⭐</Text>
+            </View>
+            <Text style={styles.cardTitle}>Saved Routes</Text>
+          </View>
+          <Text style={styles. cardDescription}>
+            Quick access to your frequently used routes
+          </Text>
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>No saved routes</Text>
+            <Text style={styles.emptyStateSubtext}>
+              Save routes for quick access later
+            </Text>
+          </View>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -106,117 +172,164 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0f172a',
   },
-  content: {
-    flex: 1,
-    padding: 20,
+  header: {
+    alignItems: 'center',
     paddingTop: 40,
+    paddingBottom: 30,
+    backgroundColor: '#1e293b',
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
-  header:  {
-    marginBottom: 30,
+  logo: {
+    width: 80,
+    height: 80,
+    marginBottom: 15,
   },
-  appTitle: {
-    fontSize: 42,
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  titleFair: {
+    fontSize: 36,
     fontWeight: 'bold',
-    textAlign: 'center',
     color: '#f59e0b',
-    marginBottom: 8,
     letterSpacing: 2,
   },
-  welcomeText: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#ffffff',
-    marginBottom: 4,
+  titleRide: {
+    fontSize:  36,
+    fontWeight:  'bold',
+    color:  '#ffffff',
+    letterSpacing: 2,
   },
-  subtitle:  {
+  subtitle: {
     fontSize: 16,
-    textAlign: 'center',
+    color: '#cbd5e1',
+    fontWeight: '500',
+    marginBottom: 12,
+  },
+  regionBadge: {
+    backgroundColor: '#334155',
+    paddingHorizontal: 16,
+    paddingVertical:  8,
+    borderRadius:  20,
+  },
+  regionText: {
     color: '#f59e0b',
+    fontSize: 14,
     fontWeight: '600',
   },
-  cardContainer: {
-    marginBottom: 30,
+  content: {
+    padding: 20,
   },
   card:  {
     backgroundColor: '#1e293b',
-    padding:  20,
-    borderRadius:  16,
-    marginBottom: 16,
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#334155',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity:  0.3,
     shadowRadius: 8,
     elevation: 6,
-    borderWidth: 1,
-    borderColor: '#334155',
+  },
+  cardHeader:  {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom:  12,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#334155',
+    justifyContent:  'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
   cardIcon: {
-    fontSize: 36,
-    marginBottom: 10,
-    textAlign: 'center',
+    fontSize: 20,
   },
   cardTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#ffffff',
-    marginBottom: 8,
-    textAlign: 'center',
   },
   cardDescription: {
     fontSize: 14,
-    color: '#cbd5e1',
-    textAlign: 'center',
+    color: '#94a3b8',
+    marginBottom: 20,
     lineHeight: 20,
   },
-  statsContainer: {
-    backgroundColor: '#1e293b',
-    padding: 20,
-    borderRadius: 16,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#f59e0b',
-  },
-  statsTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#f59e0b',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  statsGrid: {
-    flexDirection:  'row',
-    justifyContent: 'space-around',
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: 28,
-    fontWeight: 'bold',
+  input: {
+    backgroundColor: '#334155',
     color: '#ffffff',
-    marginBottom: 4,
+    padding:  16,
+    borderRadius:  12,
+    marginBottom: 16,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#475569',
   },
-  statLabel: {
-    fontSize: 12,
-    color: '#cbd5e1',
-    textAlign:  'center',
-  },
-  logoutButton: {
-    backgroundColor: '#dc2626',
+  compareButton: {
+    backgroundColor: '#f59e0b',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
-    marginTop: 10,
-    shadowColor: '#dc2626',
-    shadowOffset:  { width: 0, height:  4 },
+    marginTop: 8,
+    shadowColor: '#f59e0b',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity:  0.3,
     shadowRadius: 8,
     elevation: 6,
   },
-  logoutButtonText: {
+  compareButtonText: {
     color: '#ffffff',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  pricePreview: {
+    marginTop: 20,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#334155',
+  },
+  pricePreviewLabel: {
+    fontSize:  14,
+    color: '#cbd5e1',
+    marginBottom: 12,
+    fontWeight: '600',
+  },
+  providerTags:  {
+    flexDirection: 'row',
+    flexWrap:  'wrap',
+    gap: 8,
+  },
+  providerTag: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  providerTagText:  {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  emptyStateText:  {
+    fontSize: 16,
+    color:  '#cbd5e1',
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: '#64748b',
+    textAlign: 'center',
   },
 });
