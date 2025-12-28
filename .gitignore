@@ -1,2 +1,72 @@
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment - NEVER COMMIT! 
+venv/
+env/
+ENV/
+. venv
+
+# Environment Variables
+.env
+.env. local
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Docker
+*. log
+
+# Frontend
+frontend/node_modules/
+frontend/. expo/
+frontend/. expo-shared/
+frontend/dist/
+frontend/web-build/
+frontend/npm-debug.*
+frontend/*. jks
+frontend/*.p8
+frontend/*.p12
+frontend/*.key
+frontend/*. mobileprovision
+frontend/*.orig.*

@@ -8,10 +8,13 @@ services:
       POSTGRES_DB: fairride
       POSTGRES_USER: fairride_user
       POSTGRES_PASSWORD: fairride_dev_password
+      POSTGRES_HOST_AUTH_METHOD: trust
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./pg_hba.conf:/etc/postgresql/pg_hba.conf
+    command: postgres -c hba_file=/etc/postgresql/pg_hba.conf
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U fairride_user -d fairride"]
       interval: 10s
