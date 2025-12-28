@@ -28,7 +28,7 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
     try {
       const result = await authAPI.login(username, password);
-      Alert.alert('Success', 'Login successful!');
+      Alert.alert('Success', 'Login successful! ');
       navigation.replace('Dashboard');
     } catch (error) {
       console.error('Login error:', error);
@@ -48,15 +48,20 @@ export default function LoginScreen({ navigation }) {
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
-          {/* Logo */}
-          <View style={styles.logoContainer}>
-            <Image
-              source={require('../../assets/images/fairride-logo.png')}
-              style={styles.logo}
-              resizeMode="contain"
-            />
+          {/* Logo Icon - SHUMË MË E MADHE */}
+          <Image
+            source={require('../../assets/images/logo.png')}
+            style={styles. logo}
+            resizeMode="contain"
+          />
+
+          {/* FAIRRIDE Text - FAIR orange, RIDE white - MË E MADHE */}
+          <View style={styles.logoTextContainer}>
+            <Text style={styles.logoTextFair}>FAIR</Text>
+            <Text style={styles.logoTextRide}>RIDE</Text>
           </View>
-<Text style={styles.welcomeText}>Welcome</Text>
+
+          <Text style={styles.welcomeText}>Welcome</Text>
           <Text style={styles.subtitle}>Get a Fair Price, Every Time</Text>
 
           <View style={styles.formContainer}>
@@ -81,7 +86,7 @@ export default function LoginScreen({ navigation }) {
             />
 
             <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
+              style={[styles.button, loading && styles. buttonDisabled]}
               onPress={handleLogin}
               disabled={loading}
             >
@@ -104,7 +109,7 @@ export default function LoginScreen({ navigation }) {
 
           <View style={styles.testCredentials}>
             <Text style={styles.testTitle}>🔑 Test Credentials</Text>
-            <Text style={styles.testText}>Username: test</Text>
+            <Text style={styles. testText}>Username: test</Text>
             <Text style={styles.testText}>Password: test123</Text>
           </View>
         </View>
@@ -115,7 +120,7 @@ export default function LoginScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: {
-    flex:  1,
+    flex: 1,
     backgroundColor: '#0f172a',
   },
   scrollContent: {
@@ -125,23 +130,31 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 20,
-    paddingTop: 40,
+    paddingTop: 20,
   },
-  logoContainer: {
+  logo:  {
+    width: 200,           // SHUMË MË E MADHE! 
+    height: 200,          // SHUMË MË E MADHE!
+    alignSelf: 'center',
+    marginBottom: 2,
+  },
+  logoTextContainer: {
+    flexDirection:  'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom:  20,
+    marginBottom: 35,
   },
-  logo: {
-    width: 200,
-    height: 200,
-  },
-  appTitle: {
-    fontSize: 48,
+  logoTextFair: {
+    fontSize:  50,         // SHUMË MË E MADHE!
     fontWeight: 'bold',
-    textAlign: 'center',
     color: '#f59e0b',
-    marginBottom: 10,
-    letterSpacing: 2,
+    letterSpacing: 3,
+  },
+  logoTextRide: {
+    fontSize:  50,         // SHUMË MË E MADHE!
+    fontWeight: 'bold',
+    color: '#ffffff',
+    letterSpacing: 3,
   },
   welcomeText: {
     fontSize: 32,
@@ -159,9 +172,9 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     backgroundColor: '#1e293b',
-    padding:  24,
+    padding: 24,
     borderRadius: 20,
-    marginBottom: 30,
+    marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity:  0.3,
@@ -174,7 +187,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     marginBottom: 16,
-    fontSize:  16,
+    fontSize: 16,
     borderWidth: 1,
     borderColor: '#475569',
   },
@@ -186,7 +199,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     shadowColor: '#f59e0b',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity:  0.3,
+    shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
   },
@@ -216,8 +229,8 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: '#1e293b',
     borderRadius:  12,
-    borderWidth: 1,
-    borderColor: '#f59e0b',
+    borderWidth:  1,
+    borderColor:  '#f59e0b',
   },
   testTitle: {
     fontWeight: 'bold',
